@@ -1,0 +1,8 @@
+{
+    "actions": [
+        { "add": {
+            "alias": "domains",
+            "index": "domains_v1"
+        }}
+    ]
+}

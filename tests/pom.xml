@@ -3,15 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <properties>
+	<parent>
+		<groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+		<artifactId>app1-root</artifactId>
+		<version>0.0.2-SNAPSHOT</version>
+	</parent>
+	<artifactId>app1-tests</artifactId>
+	<name>app1-tests</name>
+	<description>app1-tests</description>
+	<properties>
         <maven-failsafe-plugin.version>2.18</maven-failsafe-plugin.version>
     </properties>
-    <parent>
-        <groupId>org.diveintojee.poc.org.diveintojee.poc.ansiblecluster</groupId>
-        <artifactId>cluster-root</artifactId>
-        <version>0.0.2-SNAPSHOT</version>
-    </parent>
-    <artifactId>cluster-tests</artifactId>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -40,8 +42,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.diveintojee.poc.org.diveintojee.poc.ansiblecluster</groupId>
-            <artifactId>cluster-domain</artifactId>
+            <groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+            <artifactId>app1-domain</artifactId>
             <scope>test</scope>
             <exclusions>
                 <exclusion>

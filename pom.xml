@@ -3,39 +3,31 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.diveintojee.poc.org.diveintojee.poc.ansiblecluster</groupId>
-    <artifactId>cluster-root</artifactId>
-    <name>cluster-root</name>
+    <groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+    <artifactId>app1-root</artifactId>
+    <name>app1-root</name>
     <version>0.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <distributionManagement>
-        <repository>
-            <id>deployment</id>
-            <name>Internal Releases</name>
-            <url>http://localhost:8081/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>deployment</id>
-            <name>Internal Releases</name>
-            <url>http://localhost:8081/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
     <modules>
         <module>domain</module>
-        <module>service</module>
+        <module>api</module>
         <module>tests</module>
-    </modules>
+		<module>db-upgrader</module>
+		<module>index-upgrader</module>
+	</modules>
     <properties>
         <java.version>1.7</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <guava.version>17.0</guava.version>
         <commons-lang3.version>3.3.2</commons-lang3.version>
-        <spring-boot.version>1.2.0.RELEASE</spring-boot.version>
+        <spring-boot.version>1.2.1.RELEASE</spring-boot.version>
         <maven-release-plugin.version>2.2.1</maven-release-plugin.version>
         <elasticsearch.version>1.4.0</elasticsearch.version>
-    </properties>
-
+		<flyway.version>3.1</flyway.version>
+		<mysql-connector-java.version>5.1.34</mysql-connector-java.version>
+		<junit.version>4.11</junit.version>
+	</properties>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -49,8 +41,23 @@
                 <version>${commons-lang3.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.diveintojee.poc.org.diveintojee.poc.ansiblecluster</groupId>
-                <artifactId>cluster-domain</artifactId>
+                <groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+                <artifactId>app1-domain</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+                <artifactId>app1-api</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+                <artifactId>app1-db-upgrader</artifactId>
+                <version>${project.parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+                <artifactId>app1-index-upgrader</artifactId>
                 <version>${project.parent.version}</version>
             </dependency>
             <dependency>
@@ -117,7 +124,28 @@
                 <artifactId>spring-boot-starter-logging</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
-        </dependencies>
+			<dependency>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-commandline</artifactId>
+				<version>${flyway.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-core</artifactId>
+				<version>${flyway.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+				<version>${mysql-connector-java.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${junit.version}</version>
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
     </dependencyManagement>
     <build>
         <pluginManagement>

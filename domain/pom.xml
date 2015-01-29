@@ -2,13 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.diveintojee.poc.org.diveintojee.poc.ansiblecluster</groupId>
-        <artifactId>cluster-root</artifactId>
+        <groupId>org.diveintojee.poc.digitaloceancluster</groupId>
+		<artifactId>app1-root</artifactId>
         <version>0.0.2-SNAPSHOT</version>
     </parent>
-    <artifactId>cluster-domain</artifactId>
-    <name>cluster-domain</name>
-    <description>cluster-domain</description>
+    <artifactId>app1-domain</artifactId>
+    <name>app1-domain</name>
+    <description>app1-domain</description>
     <dependencies>
         <dependency>
             <groupId>org.hibernate</groupId>
