@@ -1,6 +1,6 @@
-package org.diveintojee.poc.ansiblecluster;
+package org.diveintojee.poc.digitaloceancluster.app1;
 
-import org.diveintojee.poc.ansiblecluster.domain.Domain;
+import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

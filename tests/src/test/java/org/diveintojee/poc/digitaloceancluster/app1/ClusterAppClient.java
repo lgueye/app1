@@ -1,7 +1,7 @@
-package org.diveintojee.poc.ansiblecluster;
+package org.diveintojee.poc.digitaloceancluster.app1;
 
 import com.google.common.collect.Maps;
-import org.diveintojee.poc.ansiblecluster.domain.Domain;
+import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -14,7 +14,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

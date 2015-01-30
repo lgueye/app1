@@ -1,4 +1,4 @@
-package org.diveintojee.poc.ansiblecluster;
+package org.diveintojee.poc.digitaloceancluster.app1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;

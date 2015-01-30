@@ -1,6 +1,6 @@
-package org.diveintojee.poc.ansiblecluster.persistence.index;
+package org.diveintojee.poc.digitaloceancluster.app1.persistence.index;
 
-import org.diveintojee.poc.ansiblecluster.domain.Domain;
+import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 

@@ -1,4 +1,4 @@
-package org.diveintojee.poc.ansiblecluster.api;
+package org.diveintojee.poc.digitaloceancluster.app1.api;
 
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {

@@ -1,6 +1,6 @@
-package org.diveintojee.poc.ansiblecluster.persistence.data;
+package org.diveintojee.poc.digitaloceancluster.app1.persistence.data;
 
-import org.diveintojee.poc.ansiblecluster.domain.Domain;
+import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;

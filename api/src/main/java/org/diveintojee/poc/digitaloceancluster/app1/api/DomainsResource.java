@@ -1,7 +1,7 @@
-package org.diveintojee.poc.ansiblecluster.api;
+package org.diveintojee.poc.digitaloceancluster.app1.api;
 
-import org.diveintojee.poc.ansiblecluster.domain.Domain;
-import org.diveintojee.poc.ansiblecluster.service.DomainService;
+import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
+import org.diveintojee.poc.digitaloceancluster.app1.service.DomainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -13,12 +13,19 @@
 	<description>app1-index-upgrader</description>
 	<url>http://projects.spring.io/spring-boot/</url>
 	<properties>
-		<main.basedir>${basedir}/../..</main.basedir>
+		<randomizedtesting-runner.version>2.1.10</randomizedtesting-runner.version>
+		<lucene-test-framework.version>4.10.2</lucene-test-framework.version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-test-framework</artifactId>
+			<version>${lucene-test-framework.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
@@ -42,19 +49,21 @@
 			<artifactId>app1-domain</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.carrotsearch.randomizedtesting</groupId>
+			<artifactId>randomizedtesting-runner</artifactId>
+			<version>${randomizedtesting-runner.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.elasticsearch</groupId>
 			<artifactId>elasticsearch</artifactId>
 			<version>${elasticsearch.version}</version>
 			<scope>test</scope>
 			<type>test-jar</type>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
 </project>

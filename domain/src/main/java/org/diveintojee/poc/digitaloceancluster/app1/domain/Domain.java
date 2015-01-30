@@ -1,4 +1,4 @@
-package org.diveintojee.poc.ansiblecluster.domain;
+package org.diveintojee.poc.digitaloceancluster.app1.domain;
 
 import com.google.common.base.Objects;
 import org.springframework.data.elasticsearch.annotations.Document;

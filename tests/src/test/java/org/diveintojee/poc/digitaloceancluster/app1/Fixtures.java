@@ -1,7 +1,7 @@
-package org.diveintojee.poc.ansiblecluster;
+package org.diveintojee.poc.digitaloceancluster.app1;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.diveintojee.poc.ansiblecluster.domain.Domain;
+import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 
 public class Fixtures {
 
