@@ -1,8 +1,15 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.base.Function;
+import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.collect.Collections2;
+import com.carrotsearch.ant.tasks.junit4.dependencies.com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
@@ -28,20 +35,26 @@ public class MigrationTest extends ElasticsearchIntegrationTest {
 	public void crudShouldSucceed() throws IOException, ExecutionException, InterruptedException {
 		final AdminClient admin = ElasticsearchIntegrationTest.client().admin();
 		// Create index
-		String settingsSource = Resources.toString(Resources.getResource("migrations/domains_v1/settings.json"), Charsets.UTF_8);
-		final CreateIndexResponse createIndexResponse = admin.indices().prepareCreate("domains_v1")
+		final String targetIndex = "domains_v1";
+		String settingsSource = Resources.toString(Resources.getResource("migrations/" + targetIndex + "/settings.json"), Charsets.UTF_8);
+		final CreateIndexResponse createIndexResponse = admin.indices().prepareCreate(targetIndex)
 				.setSource(settingsSource).execute().actionGet();
 		assertEquals(true, createIndexResponse.isAcknowledged());
 
 		// Add mappings
-		String mappingSource = Resources.toString(Resources.getResource("migrations/domains_v1/mappings/domains.json"), Charsets.UTF_8);
-		final PutMappingResponse putMappingResponse = admin.indices().preparePutMapping("domains_v1").setType("domains")
-				.setSource(mappingSource).execute().actionGet();
-		assertTrue(putMappingResponse.isAcknowledged());
+		List<String> resolvedMappings = resolveMappings(targetIndex);
+		// iterate for mappings
+		for (String mapping : resolvedMappings) {
+			String mappingSource = Resources.toString(Resources.getResource("migrations/" + targetIndex + "/mappings/" + mapping + ".json"), Charsets.UTF_8);
+			final PutMappingResponse putMappingResponse = admin.indices().preparePutMapping(targetIndex).setType(mapping)
+					.setSource(mappingSource).execute().actionGet();
+			assertTrue(putMappingResponse.isAcknowledged());
+		}
 
 		// Add alias
+		final String alias = "domains";
 		final IndicesAliasesResponse indicesAliasesResponse = admin.indices().prepareAliases()
-				.addAlias("domains_v1", "domains").execute().actionGet();
+				.addAlias(targetIndex, alias).execute().actionGet();
 		assertTrue(indicesAliasesResponse.isAcknowledged());
 
 		final Domain domain = new Domain();
@@ -64,6 +77,24 @@ public class MigrationTest extends ElasticsearchIntegrationTest {
 		deleteDomain(id);
 		Domain persisted = retrieveDomain(id);
 		assertNull(persisted);
+	}
+
+	private List<String> resolveMappings(String targetIndex) {
+		final URL resource = Resources.getResource("migrations/" +targetIndex + "/mappings");
+		final String[] mappings = new File(resource.getFile()).list();
+		List<String> list = Lists.newArrayList();
+		for (String mapping : mappings) {
+			list.add(mapping.substring(0, mapping.lastIndexOf(".json")));
+		}
+		return list;
+	}
+
+	@Test
+	public void testResolveMappings() {
+		String targetIndex = "domains_v1";
+		final List<String> expected = Lists.newArrayList();
+		expected.add("domains");
+		assertEquals(expected, resolveMappings(targetIndex));
 	}
 
 	private void deleteDomain(Long id) throws ExecutionException, InterruptedException {
