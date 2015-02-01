@@ -1,0 +1,11 @@
+{
+    "tests" : {
+        "dynamic": "strict",
+        "properties" : {
+            "id" : {"type" : "long", "store" : true },
+            "title" : {"type" : "string", "store" : true },
+            "description" : {"type" : "string", "store" : true },
+            "imageUrl" : {"type" : "string", "store" : true }
+        }
+    }
+}
