@@ -14,8 +14,6 @@ import org.flywaydb.core.Flyway;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -26,26 +24,27 @@ import org.springframework.jdbc.support.KeyHolder;
 
 public class MigrationTest {
 
+	private SimpleDriverDataSource dataSource;
 	private JdbcTemplate jdbcTemplate;
-
-	private Logger LOG = LoggerFactory.getLogger(MigrationTest.class);
 
 	@Before
 	public void before() {
-		SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+		dataSource = new SimpleDriverDataSource();
 		dataSource.setDriverClass(org.h2.Driver.class);
 		dataSource.setUsername("sa");
 		dataSource.setUrl("jdbc:h2:mem:target/h2;DB_CLOSE_DELAY=-1");
 		dataSource.setPassword("");
-		Flyway flyway = new Flyway();
-		flyway.setLocations("migrations");
-		flyway.setDataSource(dataSource);
-		flyway.migrate();
 		jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 
 	@Test
-	public void crudShouldSucceed() {
+	public void migrationShouldSucceed() {
+		Flyway flyway = new Flyway();
+		flyway.setLocations("migrations");
+		flyway.setDataSource(dataSource);
+		MigrationService migrationService = new MigrationService(flyway);
+		migrationService.migrate();
+
 		final Domain domain = new Domain();
 		domain.setTitle(RandomStringUtils.randomAlphanumeric(Domain.TITLE_MAX_SIZE));
 		domain.setDescription(RandomStringUtils.randomAlphanumeric(Domain.DESCRIPTION_MAX_SIZE));
@@ -70,6 +69,7 @@ public class MigrationTest {
 		} catch (Throwable t) {
 			Assert.fail("EmptyResultDataAccessException expected, got " + t);
 		}
+
 	}
 
 	private void deleteDomain(Long id) {

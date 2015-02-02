@@ -1,0 +1,11 @@
+{
+    "logs" : {
+        "dynamic": "strict",
+        "properties" : {
+            "id" : {"type" : "long", "store" : true },
+            "ip" : {"type" : "string", "store" : true },
+            "level" : {"type" : "string", "store" : true },
+            "message" : {"type" : "string", "store" : true }
+        }
+    }
+}

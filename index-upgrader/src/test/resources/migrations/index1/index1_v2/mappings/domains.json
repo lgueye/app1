@@ -1,5 +1,5 @@
 {
-    "tests" : {
+    "domains" : {
         "dynamic": "strict",
         "properties" : {
             "id" : {"type" : "long", "store" : true },
