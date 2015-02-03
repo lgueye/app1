@@ -1,42 +1,41 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import java.io.File;
-import java.io.Serializable;
-
 import com.google.common.base.Objects;
 
-public class Migration implements Serializable {
-	private File alias;
-	private File source;
-	private File target;
+import java.io.Serializable;
 
-	public Migration(File alias, File source, File target) {
+public class Migration implements Serializable {
+	private String alias;
+	private String source;
+	private String target;
+
+	public Migration(String alias, String source, String target) {
 		this.setAlias(alias);
 		this.setSource(source);
 		this.setTarget(target);
 	}
 
-	public File getAlias() {
+	public String getAlias() {
 		return alias;
 	}
 
-	public void setAlias(File alias) {
+	public void setAlias(String alias) {
 		this.alias = alias;
 	}
 
-	public File getSource() {
+	public String getSource() {
 		return source;
 	}
 
-	public void setSource(File source) {
+	public void setSource(String source) {
 		this.source = source;
 	}
 
-	public File getTarget() {
+	public String getTarget() {
 		return target;
 	}
 
-	public void setTarget(File target) {
+	public void setTarget(String target) {
 		this.target = target;
 	}
 
