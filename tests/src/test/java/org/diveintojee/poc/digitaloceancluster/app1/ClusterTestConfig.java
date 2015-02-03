@@ -1,6 +1,8 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +12,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
-import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author louis.gueye@gmail.com

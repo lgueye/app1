@@ -1,6 +1,12 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import com.google.common.collect.Maps;
+import static org.junit.Assert.assertNotNull;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,12 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertNotNull;
+import com.google.common.collect.Maps;
 
 @Component
 public class ClusterAppClient {
