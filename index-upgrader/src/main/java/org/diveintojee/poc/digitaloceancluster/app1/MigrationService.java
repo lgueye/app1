@@ -5,6 +5,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -23,6 +24,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -49,92 +51,54 @@ public class MigrationService {
     }
 
     public void migrate() throws IOException, ExecutionException, InterruptedException {
-		List<File> aliases = resolveAliases();
-		for (File alias : aliases) {
-			File sourceIndex = resolveSourceIndex(alias);
-			File targetIndex = resolveTargetIndex(alias);
-			migrate(alias, sourceIndex, targetIndex);
+		List<Migration> migrations = resolveMigrations();
+		for (Migration migration : migrations) {
+			if (migration.getSource() != null)
+				LOG.info("Migrating alias {} from {} to {}", migration.getAlias().getName(), migration.getSource().getName(), migration.getTarget().getName());
+			else
+				LOG.info("Migrating alias {} from {} to {}", migration.getAlias().getName(), null, migration.getTarget().getName());
+			migrate(migration);
 		}
 	}
 
-	File resolveTargetIndex(File alias) {
-		final String[] indices = alias.list(new FilenameFilter() {
+	private List<Migration> resolveMigrations() throws ExecutionException, InterruptedException {
+		final String[] aliasesArray = new File(Resources.getResource("migrations").getFile()).list(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
 				return new File(dir, name).isDirectory();
 			}
 		});
+		final List<String> aliasesList = Lists.newArrayList(aliasesArray);
+		Collections.sort(aliasesList);
+		final IndicesAdminClient indicesAdminClient = client.admin().indices();
+		List<Migration> migrations = Lists.newArrayList();
 
-		List<File> list = Lists.newArrayList();
-		for (String index : indices) {
-			File indexDir = new File(alias, index);
-			list.add(indexDir);
-		}
+		for (String alias : aliasesList) {
+			String[] indicesArray = new File(Resources.getResource("migrations/" + alias).getFile()).list(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return new File(dir, name).isDirectory();
+				}
+			});
+			final List<String> indicesList = Lists.newArrayList(indicesArray);
+			Collections.sort(indicesList);
+			for (int i = 0; i < indicesList.size(); i++) {
+				String source = (i == 0) ? null : indicesList.get(i - 1);
+				String target = indicesList.get(i);
+				if (!indicesAdminClient.prepareExists(target).execute().get().isExists()) {
+					File aliasFile = new File(Resources.getResource("migrations/" + alias).getFile());
+					File sourceFile = (source == null) ? null : new File(aliasFile, source);
+					File targetFile = new File(aliasFile, target);
+					migrations.add(new Migration(aliasFile, sourceFile, targetFile));
+				}
 
-		// Sort in desc order
-		Collections.sort(list, new Comparator<File>() {
-			@Override
-			public int compare(File o1, File o2) {
-				return o2.getName().compareTo(o1.getName());
 			}
-		});
-		final Iterator<File> iterator = list.iterator();
-		if (!iterator.hasNext()) throw new IllegalStateException("Can not perform migration for alias '" + alias + "', at least target index is required under directory "+alias+". Please define one");
-		// Return last
-		return iterator.next();
+		}
+		return migrations;
 	}
 
-	File resolveSourceIndex(File alias) {
-		final String[] indices = alias.list(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return new File(dir, name).isDirectory();
-			}
-		});
-
-		List<File> list = Lists.newArrayList();
-		for (String index : indices) {
-			File indexDir = new File(alias, index);
-			list.add(indexDir);
-		}
-
-		// Sort in desc order
-		Collections.sort(list, new Comparator<File>() {
-			@Override
-			public int compare(File o1, File o2) {
-				return o2.getName().compareTo(o1.getName());
-			}
-		});
-		final Iterator<File> iterator = list.iterator();
-		if (!iterator.hasNext()) throw new IllegalStateException("Can not perform migration for alias '" + alias + "', at one index is required under directory "+alias+". Please define one");
-		iterator.next();
-		// Find the previous before last
-		// If not found : no previous, return null
-		if (!iterator.hasNext()) return null;
-		// Else return previous before last
-		return iterator.next();
-	}
-
-	List<File> resolveAliases() {
-		final URL migrationsUrl = Resources.getResource("migrations");
-		final String[] aliases = new File(migrationsUrl.getFile()).list(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return new File(dir, name).isDirectory();
-			}
-		});
-		List<File> list = Lists.newArrayList();
-		for (String alias : aliases) {
-			final URL aliasUrl = Resources.getResource("migrations/" + alias);
-			list.add(new File(aliasUrl.getFile()));
-		}
-		Collections.sort(list, new Comparator<File>() {
-			@Override
-			public int compare(File o1, File o2) {
-				return o1.getName().compareTo(o2.getName());
-			}
-		});
-		return list;
+	private void migrate(Migration migration) throws InterruptedException, ExecutionException, IOException {
+		migrate(migration.getAlias(), migration.getSource(), migration.getTarget());
 	}
 
 	public void migrate(File alias, File sourceIndex, File targetIndex) throws IOException, ExecutionException, InterruptedException {
@@ -158,10 +122,11 @@ public class MigrationService {
 
     }
 
-    private void createIndex(File alias, File indexFile, AdminClient admin) throws IOException, ExecutionException, InterruptedException {
+    private void createIndex(File aliasFile, File indexFile, AdminClient admin) throws IOException, ExecutionException, InterruptedException {
 		// Create index
 		final String indexName = indexFile.getName();
-		String settingsSource = Resources.toString(Resources.getResource("migrations/" + alias.getName() + "/" + indexName + "/settings.json"), Charsets.UTF_8);
+		final String aliasName = aliasFile.getName();
+		String settingsSource = Resources.toString(Resources.getResource("migrations/" + aliasName + "/" + indexName + "/settings.json"), Charsets.UTF_8);
         final CreateIndexResponse createIndexResponse = admin.indices().prepareCreate(indexName)
                 .setSource(settingsSource).execute().get();
         if (!createIndexResponse.isAcknowledged()) {
@@ -173,10 +138,8 @@ public class MigrationService {
 		// iterate for mappings
 		for (File type : resolvedMappings) {
 			final String typeFileName = type.getName();
-			LOG.info(typeFileName);
 			final String typeName = typeFileName.substring(0, typeFileName.lastIndexOf(".json"));
-			LOG.info(typeName);
-			String mappingSource = Resources.toString(Resources.getResource("migrations/" + alias.getName() + "/" + indexName + "/mappings/" + typeFileName), Charsets.UTF_8);
+			String mappingSource = Resources.toString(Resources.getResource("migrations/" + aliasName + "/" + indexName + "/mappings/" + typeFileName), Charsets.UTF_8);
 			final PutMappingResponse putMappingResponse = admin.indices().preparePutMapping(indexName)
 					.setType(typeName).setSource(mappingSource).execute().get();
 			if (!putMappingResponse.isAcknowledged()) {
@@ -207,7 +170,7 @@ public class MigrationService {
         for (File type : resolvedMappings) {
             SearchRequestBuilder searchBuilder = client.prepareSearch(sourceIndex)
                     .setSearchType(SearchType.SCAN)
-                    .setScroll(new TimeValue(600000))
+                    .setScroll(new TimeValue(6000))
                     .setQuery(QueryBuilders.matchAllQuery())
                     .setSize(200);
             SearchResponse scrollResp = searchBuilder.execute().get();
@@ -215,7 +178,7 @@ public class MigrationService {
             //Scroll until no hits are returned
             final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
             while (true) {
-                scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(600000)).execute().get();
+                scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(6000)).execute().get();
                 boolean hitsRead = false;
                 for (SearchHit hit : scrollResp.getHits()) {
                     hitsRead = true;
@@ -230,6 +193,7 @@ public class MigrationService {
             }
 
             final BulkResponse bulkItemResponses = bulkRequestBuilder.execute().get();
+			client.admin().indices().prepareRefresh().execute().get();
             if (bulkItemResponses.hasFailures()) {
 				throw new IllegalStateException("Failed to bulk index target index '" + targetIndex + "' from source index '" + sourceIndex + "' for type '" + type);
             }

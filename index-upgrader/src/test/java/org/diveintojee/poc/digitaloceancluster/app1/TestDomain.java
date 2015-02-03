@@ -12,6 +12,7 @@ public class TestDomain implements Serializable {
     private String title;
     private String description;
     private String imageUrl;
+    private String status;
 
     public Long getId() {
         return id;
@@ -45,37 +46,48 @@ public class TestDomain implements Serializable {
         this.imageUrl = imageUrl;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+	public String getStatus() {
+		return status;
+	}
 
-        TestDomain that = (TestDomain) o;
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        if (imageUrl != null ? !imageUrl.equals(that.imageUrl) : that.imageUrl != null) return false;
-        if (title != null ? !title.equals(that.title) : that.title != null) return false;
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof TestDomain)) return false;
 
-        return true;
-    }
+		TestDomain that = (TestDomain) o;
 
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (title != null ? title.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
-        result = 31 * result + (imageUrl != null ? imageUrl.hashCode() : 0);
-        return result;
-    }
+		if (description != null ? !description.equals(that.description) : that.description != null) return false;
+		if (id != null ? !id.equals(that.id) : that.id != null) return false;
+		if (imageUrl != null ? !imageUrl.equals(that.imageUrl) : that.imageUrl != null) return false;
+		if (status != null ? !status.equals(that.status) : that.status != null) return false;
+		if (title != null ? !title.equals(that.title) : that.title != null) return false;
 
-    @Override
-    public String toString() {
-        return Objects.toStringHelper(this)
-                .add("id", id)
-                .add("title", title)
-                .add("description", description)
-                .add("imageUrl", imageUrl)
-                .toString();
-    }
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = id != null ? id.hashCode() : 0;
+		result = 31 * result + (title != null ? title.hashCode() : 0);
+		result = 31 * result + (description != null ? description.hashCode() : 0);
+		result = 31 * result + (imageUrl != null ? imageUrl.hashCode() : 0);
+		result = 31 * result + (status != null ? status.hashCode() : 0);
+		return result;
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.add("id", id)
+				.add("title", title)
+				.add("description", description)
+				.add("imageUrl", imageUrl)
+				.add("status", status)
+				.toString();
+	}
 }

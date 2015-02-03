@@ -97,12 +97,12 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 	}
 
     @Test
-    public void migrationShouldSucceed() throws IOException, ExecutionException, InterruptedException {
+    public void partialMigrationShouldSucceed() throws IOException, ExecutionException, InterruptedException {
+		// Given
         final Client client = ElasticsearchIntegrationTest.client();
         MigrationService migrationService = new MigrationService(client);
 
 		File sourceIndex = new File(Resources.getResource("migrations/index1/index1_v1").getFile());
-		File targetIndex = new File(Resources.getResource("migrations/index1/index1_v2").getFile());
 		File alias = new File(Resources.getResource("migrations/index1").getFile());
 
         migrationService.migrate(alias, null, sourceIndex);
@@ -132,22 +132,78 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 
         assertEquals(transformedSourceList, sourceIndexDocuments);
 
+		// When
+		File targetIndex = new File(Resources.getResource("migrations/index1/index1_v2").getFile());
         migrationService.migrate(alias, sourceIndex, targetIndex);
-
         client.admin().indices().prepareRefresh().execute().get();
-        final SearchResponse targetIndexSearchResponse = client.prepareSearch(targetIndex.getName())
-                .setQuery(QueryBuilders.matchAllQuery()).setSize(200).execute().get();
-        assertEquals(100L, targetIndexSearchResponse.getHits().getTotalHits());
-        List<TestDomain> targetIndexDocuments = Lists.newArrayList();
-        for (SearchHit hit : targetIndexSearchResponse.getHits()) {
-            TestDomain document = objectMapper.readValue(hit.getSourceAsString(), TestDomain.class);
-            targetIndexDocuments.add(document);
-        }
 
-        assertEquals(sourceIndexDocuments, targetIndexDocuments);
+		String targetIndexName = targetIndex.getName();
+		List<TestDomain> targetIndexDocuments = buildDocuments(client, sourceIndexDocuments.size(), targetIndexName);
+		assertEquals(sourceIndexDocuments, targetIndexDocuments);
     }
 
-    private List<TestDomain> bulkIndexSourceIndex(String index, String type, Client client) throws JsonProcessingException, InterruptedException, ExecutionException {
+    @Test
+    public void fullMigrationShouldSucceed() throws IOException, ExecutionException, InterruptedException {
+		// Given
+        final Client client = ElasticsearchIntegrationTest.client();
+        MigrationService migrationService = new MigrationService(client);
+
+		File sourceIndex = new File(Resources.getResource("migrations/index1/index1_v1").getFile());
+		File alias = new File(Resources.getResource("migrations/index1").getFile());
+
+        migrationService.migrate(alias, null, sourceIndex);
+
+        List<TestDomain> sourceList = bulkIndexSourceIndex(sourceIndex.getName(), "domains", client);
+        client.admin().indices().prepareRefresh().execute().get();
+
+        final SearchResponse sourceIndexSearchResponse = client.prepareSearch(sourceIndex.getName())
+                .setQuery(QueryBuilders.matchAllQuery()).setSize(200).execute().get();
+        assertEquals(100L, sourceIndexSearchResponse.getHits().getTotalHits());
+        List<TestDomain> sourceIndexDocuments = Lists.newArrayList();
+        for (SearchHit hit : sourceIndexSearchResponse.getHits()) {
+            TestDomain document = objectMapper.readValue(hit.getSourceAsString(), TestDomain.class);
+            sourceIndexDocuments.add(document);
+        }
+        assertEquals(100L, sourceIndexDocuments.size());
+        final Collection<TestDomain> transform = Collections2.transform(sourceList, new Function<TestDomain, TestDomain>() {
+
+            @Override
+            public TestDomain apply(TestDomain input) {
+                input.setImageUrl(null);
+                return input;
+            }
+        });
+        final List<TestDomain> transformedSourceList = Lists.newArrayList(transform);
+        assertEquals(100L, transformedSourceList.size());
+
+        assertEquals(transformedSourceList, sourceIndexDocuments);
+
+		// When
+        migrationService.migrate();
+        client.admin().indices().prepareRefresh().execute().get();
+
+		// Then
+		String targetIndex;
+		List<TestDomain> targetIndexDocuments;
+		targetIndex = "index1_v3";
+		targetIndexDocuments = buildDocuments(client, sourceIndexDocuments.size(), targetIndex);
+		assertEquals(sourceIndexDocuments, targetIndexDocuments);
+    }
+
+	private List<TestDomain> buildDocuments(Client client, int sourceResultsSize, String targetIndex) throws InterruptedException, ExecutionException, IOException {
+		File targetIndexFile = new File(Resources.getResource("migrations/index1/" + targetIndex).getFile());
+		final SearchResponse searchResponse = client.prepareSearch(targetIndexFile.getName())
+				.setQuery(QueryBuilders.matchAllQuery()).setSize(sourceResultsSize).execute().get();
+		assertEquals( (long) sourceResultsSize, searchResponse.getHits().getTotalHits());
+		List<TestDomain> targetIndexDocuments = Lists.newArrayList();
+		for (SearchHit hit : searchResponse.getHits()) {
+			TestDomain document = objectMapper.readValue(hit.getSourceAsString(), TestDomain.class);
+			targetIndexDocuments.add(document);
+		}
+		return targetIndexDocuments;
+	}
+
+	private List<TestDomain> bulkIndexSourceIndex(String index, String type, Client client) throws JsonProcessingException, InterruptedException, ExecutionException {
         final BulkRequestBuilder bulkRequestBuilder = client.prepareBulk();
         List<TestDomain> sourceList = Lists.newArrayList();
         for (int i = 1; i <= 100; i++) {
@@ -161,44 +217,9 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
             bulkRequestBuilder.add(client.prepareIndex(index, type).setSource(objectMapper.writeValueAsString(document)).setId(id.toString()));
         }
         final BulkResponse bulkItemResponses = bulkRequestBuilder.execute().get();
+		client.admin().indices().prepareRefresh().execute().get();
         assertFalse(bulkItemResponses.hasFailures());
         return sourceList;
     }
-
-	@Test
-	public void resolveAliasesShouldSucceed() {
-		List<File> expected = Lists.newArrayList(new File(Resources.getResource("migrations/index1").getFile()),
-				new File(Resources.getResource("migrations/index2").getFile()));
-		List<File> actual = new MigrationService(null).resolveAliases();
-		assertEquals(expected, actual);
-	}
-
-	@Test
-	public void resolveTargetIndexWithNoPreviousVersionShouldSucceed() {
-		File expected = new File(Resources.getResource("migrations/index2/index2_v1").getFile());
-		File actual = new MigrationService(null).resolveTargetIndex(new File(Resources.getResource("migrations/index2").getFile()));
-		assertEquals(expected, actual);
-	}
-
-	@Test
-	public void resolveSourceIndexWithNoPreviousVersionShouldSucceed() {
-		File expected = null;
-		File actual = new MigrationService(null).resolveSourceIndex(new File(Resources.getResource("migrations/index2").getFile()));
-		assertEquals(expected, actual);
-	}
-
-	@Test
-	public void resolveSourceIndexWithAPreviousVersionShouldSucceed() {
-		File expected = new File(Resources.getResource("migrations/index1/index1_v1").getFile());
-		File actual = new MigrationService(null).resolveSourceIndex(new File(Resources.getResource("migrations/index1").getFile()));
-		assertEquals(expected, actual);
-	}
-
-	@Test
-	public void resolveTargetIndexWithAPreviousVersionShouldSucceed() {
-		File expected = new File(Resources.getResource("migrations/index1/index1_v2").getFile());
-		File actual = new MigrationService(null).resolveTargetIndex(new File(Resources.getResource("migrations/index1").getFile()));
-		assertEquals(expected, actual);
-	}
 
 }
