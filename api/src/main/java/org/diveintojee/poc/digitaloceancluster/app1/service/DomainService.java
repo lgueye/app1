@@ -1,11 +1,6 @@
 package org.diveintojee.poc.digitaloceancluster.app1.service;
 
-import java.util.List;
-
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
+import com.google.common.collect.Lists;
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.diveintojee.poc.digitaloceancluster.app1.persistence.data.DatabaseRepository;
 import org.diveintojee.poc.digitaloceancluster.app1.persistence.index.IndexRepository;
@@ -13,7 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import com.google.common.collect.Lists;
+import javax.transaction.Transactional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * @author louis.gueye@gmail.com

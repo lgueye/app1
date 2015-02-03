@@ -1,16 +1,14 @@
 package org.diveintojee.poc.digitaloceancluster.app1.domain;
 
-import java.io.Serializable;
+import com.google.common.base.Objects;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.Size;
-
-import org.springframework.data.elasticsearch.annotations.Document;
-
-import com.google.common.base.Objects;
+import java.io.Serializable;
 
 /**
  * @author louis.gueye@gmail.com

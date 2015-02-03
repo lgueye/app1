@@ -1,10 +1,10 @@
 package org.diveintojee.poc.digitaloceancluster.app1.persistence.index;
 
-import java.util.List;
-
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+
+import java.util.List;
 
 /**
  * @author louis.gueye@gmail.com
