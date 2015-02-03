@@ -53,7 +53,7 @@ public class MigrationService {
 	}
 
 	private List<Migration> resolveMigrations() throws ExecutionException, InterruptedException {
-		final String[] aliasesArray = new File(Resources.getResource("migrations").getFile()).list(new FilenameFilter() {
+        final String[] aliasesArray = new File(Resources.getResource(migrationsPath()).getFile()).list(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
 				return new File(dir, name).isDirectory();
@@ -65,7 +65,7 @@ public class MigrationService {
 		List<Migration> migrations = Lists.newArrayList();
 
 		for (String alias : aliasesList) {
-			String[] indicesArray = new File(Resources.getResource("migrations/" + alias).getFile()).list(new FilenameFilter() {
+			String[] indicesArray = new File(Resources.getResource(aliasPath(alias)).getFile()).list(new FilenameFilter() {
 				@Override
 				public boolean accept(File dir, String name) {
 					return new File(dir, name).isDirectory();
@@ -85,7 +85,31 @@ public class MigrationService {
 		return migrations;
 	}
 
-	void migrate(Migration migration) throws InterruptedException, ExecutionException, IOException {
+    private String migrationsPath() {
+        return "migrations";
+    }
+
+    private String aliasPath(String alias) {
+        return migrationsPath() + "/" + alias;
+    }
+
+    private String indexPath(String alias, String index) {
+        return aliasPath(alias) + "/" + index;
+    }
+
+    private String settingsPath(String alias, String index) {
+        return indexPath(alias, index) + "/settings.json";
+    }
+
+    private String mappingsPath(String alias, String index) {
+        return indexPath(alias, index) + "/mappings";
+    }
+
+    private String typePath(String alias, String index, String type) {
+        return mappingsPath(alias, index) + "/" + type;
+    }
+
+    void migrate(Migration migration) throws InterruptedException, ExecutionException, IOException {
 
         final String alias = migration.getAlias();
         final String source = migration.getSource();
@@ -109,7 +133,7 @@ public class MigrationService {
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
 
 		// Create index
-		String settingsSource = Resources.toString(Resources.getResource("migrations/" + alias + "/" + index + "/settings.json"), Charsets.UTF_8);
+		String settingsSource = Resources.toString(Resources.getResource(settingsPath(alias, index)), Charsets.UTF_8);
         final CreateIndexResponse createIndexResponse = indicesAdminClient.prepareCreate(index)
                 .setSource(settingsSource).execute().get();
         if (!createIndexResponse.isAcknowledged()) {
@@ -120,7 +144,7 @@ public class MigrationService {
 		List<String> resolvedMappings = resolveMappings(alias, index);
 		// iterate for mappings
 		for (String typeFileName : resolvedMappings) {
-			String mappingSource = Resources.toString(Resources.getResource("migrations/" + alias + "/" + index + "/mappings/" + typeFileName), Charsets.UTF_8);
+			String mappingSource = Resources.toString(Resources.getResource(typePath(alias, index, typeFileName)), Charsets.UTF_8);
             String type = typeFileName.substring(0, typeFileName.lastIndexOf(".json"));
 			final PutMappingResponse putMappingResponse = indicesAdminClient.preparePutMapping(index)
 					.setType(type).setSource(mappingSource).execute().get();
@@ -216,7 +240,7 @@ public class MigrationService {
     }
 
     List<String> resolveMappings(String alias, String index) throws MalformedURLException {
-		final File mappingsFile = new File(Resources.getResource("migrations/" + alias + "/" + index + "/mappings").getFile());
+		final File mappingsFile = new File(Resources.getResource(mappingsPath(alias, index)).getFile());
         final String[] mappings = mappingsFile.list();
         return Lists.newArrayList(mappings);
     }
