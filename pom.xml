@@ -22,12 +22,14 @@
         <guava.version>17.0</guava.version>
         <commons-lang3.version>3.3.2</commons-lang3.version>
         <spring-boot.version>1.2.1.RELEASE</spring-boot.version>
+        <spring.version>4.1.4.RELEASE</spring.version>
         <maven-release-plugin.version>2.2.1</maven-release-plugin.version>
         <elasticsearch.version>1.4.0</elasticsearch.version>
 		<flyway.version>3.1</flyway.version>
 		<mysql-connector-java.version>5.1.34</mysql-connector-java.version>
 		<junit.version>4.11</junit.version>
         <logstash-logback-encoder.version>2.4</logstash-logback-encoder.version>
+        <h2.version>1.4.185</h2.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -112,6 +114,11 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-actuator</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
@@ -120,16 +127,6 @@
                 <artifactId>spring-boot-starter-jetty</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-logging</artifactId>
-                <version>${spring-boot.version}</version>
-            </dependency>
-			<dependency>
-				<groupId>org.flywaydb</groupId>
-				<artifactId>flyway-commandline</artifactId>
-				<version>${flyway.version}</version>
-			</dependency>
 			<dependency>
 				<groupId>org.flywaydb</groupId>
 				<artifactId>flyway-core</artifactId>
@@ -140,6 +137,17 @@
 				<artifactId>mysql-connector-java</artifactId>
 				<version>${mysql-connector-java.version}</version>
 			</dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash-logback-encoder.version}</version>
+            </dependency>
+
 			<dependency>
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
@@ -147,9 +155,16 @@
 				<scope>test</scope>
 			</dependency>
             <dependency>
-                <groupId>net.logstash.logback</groupId>
-                <artifactId>logstash-logback-encoder</artifactId>
-                <version>${logstash-logback-encoder.version}</version>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring-boot.version}</version>
+                <scope>test</scope>
             </dependency>
 		</dependencies>
     </dependencyManagement>

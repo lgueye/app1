@@ -4,15 +4,17 @@ import org.apache.commons.lang.RandomStringUtils;
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.flywaydb.core.Flyway;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,29 +23,19 @@ import java.sql.SQLException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(classes = DbMigrationApplication.class)
 public class MigrationTest {
 
-	private SimpleDriverDataSource dataSource;
-	private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private MigrationService underTest;
 
-	@Before
-	public void before() {
-		dataSource = new SimpleDriverDataSource();
-		dataSource.setDriverClass(org.h2.Driver.class);
-		dataSource.setUsername("sa");
-		dataSource.setUrl("jdbc:h2:mem:target/h2;DB_CLOSE_DELAY=-1");
-		dataSource.setPassword("");
-		jdbcTemplate = new JdbcTemplate(dataSource);
-	}
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
 	@Test
 	public void migrationShouldSucceed() {
-		Flyway flyway = new Flyway();
-		flyway.setLocations("migrations");
-		flyway.setDataSource(dataSource);
-		MigrationService migrationService = new MigrationService(flyway);
-		migrationService.migrate();
+		underTest.migrate();
 
 		final Domain domain = new Domain();
 		domain.setTitle(RandomStringUtils.randomAlphanumeric(Domain.TITLE_MAX_SIZE));
