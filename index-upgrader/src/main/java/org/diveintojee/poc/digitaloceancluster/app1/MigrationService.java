@@ -1,6 +1,5 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Resources;
@@ -22,6 +21,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -34,12 +35,14 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author louis.gueye@gmail.com
  */
+@Component
 public class MigrationService {
 
     private Client client;
 
 	private static final Logger LOG = LoggerFactory.getLogger(MigrationService.class);
 
+    @Autowired
     public MigrationService(Client client) {
         this.client = client;
     }
@@ -155,7 +158,7 @@ public class MigrationService {
 
     }
 
-    private void bulkIndexTargetIndexFromSourceIndex(String sourceIndex, String targetIndex) throws JsonProcessingException, InterruptedException, ExecutionException, MalformedURLException {
+    private void bulkIndexTargetIndexFromSourceIndex(String sourceIndex, String targetIndex) throws InterruptedException, ExecutionException, MalformedURLException {
 
         if (Strings.isEmpty(sourceIndex)) {
 			return;
