@@ -12,9 +12,6 @@
 	<name>app1-db-upgrader</name>
 	<description>app1-db-upgrader</description>
 	<url>http://projects.spring.io/spring-boot/</url>
-	<properties>
-		<maven-assembly-plugin.version>2.5.3</maven-assembly-plugin.version>
-	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
