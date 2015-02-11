@@ -24,9 +24,9 @@ public class ClusterAppClient {
 
     @Autowired
     RestOperations restTemplate;
-    @Value("${cluster-app.host}")
+    @Value("${app1.host}")
     private String host;
-    @Value("${cluster-app.port}")
+    @Value("${app1.port}")
     private int port;
 
     private String getResourceLocation() {

@@ -25,6 +25,12 @@ public class DomainResourceTestIT {
 
     @Test
     public void crudDomainShouldSucceed() throws IOException {
+        for (int i = 0; i < 100; i++ ) {
+            performCrudTest();
+        }
+    }
+
+    private void performCrudTest() throws IOException {
         Domain domain = Fixtures.validDomain();
         // Create
         URI uri = api.createDomain(domain);
