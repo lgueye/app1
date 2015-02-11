@@ -61,7 +61,11 @@ public class DomainsResource {
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public Domain get(@PathVariable("id") Long id) {
         Domain domain = this.service.getOne(id);
-        if (domain == null) throw new ResourceNotFoundException("Domain with id {" + id + "} was not found");
+        if (domain == null) {
+            final String message = "Domain with id {" + id + "} was not found";
+            LOGGER.debug(message);
+            throw new ResourceNotFoundException(message);
+        }
         LOGGER.debug("Found domain with id: {}", id);
         return domain;
     }
@@ -69,15 +73,15 @@ public class DomainsResource {
     @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public void update(@PathVariable("id") Long id, @RequestBody @Valid Domain domain) {
-        LOGGER.debug("Updated domain with id: {}", id);
         service.update(id, domain);
+        LOGGER.debug("Updated domain with id: {}", id);
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public void delete(@PathVariable("id") Long id) {
-        LOGGER.debug("Deleted domain with id: {}", id);
         this.service.delete(id);
+        LOGGER.debug("Deleted domain with id: {}", id);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -88,8 +92,8 @@ public class DomainsResource {
     @RequestMapping(method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.NO_CONTENT)
     public void delete() {
-        LOGGER.debug("Deleted all domains");
         this.service.delete();
+        LOGGER.debug("Deleted all domains");
     }
 
 }
