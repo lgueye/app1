@@ -16,9 +16,12 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -222,4 +225,11 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
         return sourceList;
     }
 
+    @Test
+    public void testScan() throws URISyntaxException, IOException {
+        final Resource[] resources = new PathMatchingResourcePatternResolver(this.getClass().getClassLoader()).getResources("/migrations/*");
+        for (Resource resource : resources) {
+            System.out.println("resource = " + resource.getURL());
+        }
+    }
 }
