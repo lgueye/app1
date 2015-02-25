@@ -1,6 +1,5 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import com.google.common.base.Splitter;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
@@ -9,6 +8,8 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.google.common.base.Splitter;
 
 @Configuration
 public class IndexMigrationConfiguration {

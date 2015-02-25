@@ -1,8 +1,10 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
-import com.google.common.io.Resources;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.util.concurrent.ExecutionException;
+
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
@@ -13,146 +15,100 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Migration implements Serializable {
-	private String alias;
-	private String source;
-	private String target;
 
-	public Migration(String alias, String source, String target) {
-		this.setAlias(alias);
+	private static final Logger LOG = LoggerFactory.getLogger(Migration.class);
+
+	private Client client;
+	private Index source;
+	private Index target;
+
+	public Migration(Client client, Index source, Index target) {
+		this.setClient(client);
 		this.setSource(source);
 		this.setTarget(target);
 	}
 
-	public String getAlias() {
-		return alias;
-	}
-
-	public void setAlias(String alias) {
-		this.alias = alias;
-	}
-
-	public String getSource() {
-		return source;
-	}
-
-	public void setSource(String source) {
+	public void setSource(Index source) {
 		this.source = source;
 	}
 
-	public String getTarget() {
-		return target;
-	}
-
-	public void setTarget(String target) {
+	public void setTarget(Index target) {
 		this.target = target;
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof Migration)) return false;
-
-		Migration migration = (Migration) o;
-
-		if (alias != null ? !alias.equals(migration.alias) : migration.alias != null) return false;
-		if (source != null ? !source.equals(migration.source) : migration.source != null) return false;
-		if (target != null ? !target.equals(migration.target) : migration.target != null) return false;
-
-		return true;
+	public void setClient(Client client) {
+		this.client = client;
 	}
 
-	@Override
-	public int hashCode() {
-		int result = alias != null ? alias.hashCode() : 0;
-		result = 31 * result + (source != null ? source.hashCode() : 0);
-		result = 31 * result + (target != null ? target.hashCode() : 0);
-		return result;
-	}
-
-	@Override
-	public String toString() {
-		return Objects.toStringHelper(this)
-				.add("alias", alias)
-				.add("source", source)
-				.add("target", target)
-				.toString();
-	}
-
-    public void migrate() {
-        final String alias = getAlias();
-        final String source = getSource();
-        final String target = getTarget();
+    public void migrate() throws ExecutionException, InterruptedException, IOException {
 
         // Create index
-        createIndex(alias, target);
+        createTargetIndex();
 
         // Bulk index target index from source index
-        bulkIndexTargetIndexFromSourceIndex(source, target);
+        bulkIndexTargetIndexFromSourceIndex();
 
         // Atomically Add and Remove alias
-        switchIndex(alias, source, target);
+        switchIndex();
 
         // Delete source index
-        deleteIndex(source);
+        deleteIndex(source.getName());
     }
-    private void createIndex(String alias, String index) throws IOException, ExecutionException, InterruptedException {
+
+    private void createTargetIndex() throws IOException, ExecutionException, InterruptedException {
+
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
 
         // Create index
-        String settingsSource = Resources.toString(Resources.getResource(settingsPath(alias, index)), Charsets.UTF_8);
-        final CreateIndexResponse createIndexResponse = indicesAdminClient.prepareCreate(index)
-                .setSource(settingsSource).execute().get();
+		final String indexName = target.getName();
+		final CreateIndexResponse createIndexResponse = indicesAdminClient.prepareCreate(indexName)
+                .setSource(target.getSettings()).execute().get();
         if (!createIndexResponse.isAcknowledged()) {
-            throw new IllegalStateException("Failed to create target index '" + index + "'");
+            throw new IllegalStateException("Failed to create target index '" + indexName + "'");
         }
 
-        // Create mappings
-        List<String> resolvedMappings = resolveMappings(alias, index);
         // iterate for mappings
-        for (String typeFileName : resolvedMappings) {
-            String mappingSource = Resources.toString(Resources.getResource(typePath(alias, index, typeFileName)), Charsets.UTF_8);
-            String type = typeFileName.substring(0, typeFileName.lastIndexOf(".json"));
-            final PutMappingResponse putMappingResponse = indicesAdminClient.preparePutMapping(index)
-                    .setType(type).setSource(mappingSource).execute().get();
+        for (Mapping mapping : target.getMappings()) {
+            final PutMappingResponse putMappingResponse = indicesAdminClient.preparePutMapping(indexName)
+                    .setType(mapping.getType()).setSource(mapping.getDefinition()).execute().get();
             if (!putMappingResponse.isAcknowledged()) {
-                throw new IllegalStateException("Failed to create type '" + typeFileName + "' for target index '" + index + "'");
+                throw new IllegalStateException("Failed to create type '" + mapping.getType() + "' for target index '" + indexName + "'");
             }
         }
 
     }
 
-    private void bulkIndexTargetIndexFromSourceIndex(String sourceIndex, String targetIndex) throws InterruptedException, ExecutionException, MalformedURLException {
+    private void bulkIndexTargetIndexFromSourceIndex() throws InterruptedException, ExecutionException, MalformedURLException {
 
-        if (Strings.isEmpty(sourceIndex)) {
-            return;
-        }
-        if (Strings.isEmpty(targetIndex)) {
-            throw new IllegalArgumentException("Trying to reindex from '" + sourceIndex + "' but target index is not defined");
-        }
+		if (source == null || Strings.isEmpty(source.getName())) {
+			return;
+		}
+		final String sourceName = source.getName();
+		if (target == null || Strings.isEmpty(target.getName())) {
+			throw new IllegalArgumentException("Trying to reindex from '" + sourceName + "' but target index is not defined");
+		}
+		final String targetName = target.getName();
+		final IndicesAdminClient indicesAdminClient = client.admin().indices();
 
-        final IndicesAdminClient indicesAdminClient = client.admin().indices();
-
-        if (!indicesAdminClient.prepareExists(sourceIndex).execute().get().isExists()) {
-            throw new IllegalArgumentException("Trying to reindex from '" + sourceIndex + "', but source index does not exist");
-        }
-        if (!indicesAdminClient.prepareExists(targetIndex).execute().get().isExists()) {
-            throw new IllegalArgumentException("Trying to reindex from '" + sourceIndex + "' to '" + targetIndex + "', but target index does not exist");
+        if (!indicesAdminClient.prepareExists(sourceName).execute().get().isExists()) {
+            throw new IllegalArgumentException("Trying to reindex from '" + sourceName + "', but source index does not exist");
         }
 
-        SearchRequestBuilder searchBuilder = client.prepareSearch(sourceIndex)
+        if (!indicesAdminClient.prepareExists(targetName).execute().get().isExists()) {
+            throw new IllegalArgumentException("Trying to reindex from '" + sourceName + "' to '" + targetName + "', but target index does not exist");
+        }
+
+        SearchRequestBuilder searchBuilder = client.prepareSearch(sourceName)
                 .setSearchType(SearchType.SCAN)
                 .setScroll(new TimeValue(6000))
                 .setQuery(QueryBuilders.matchAllQuery())
@@ -167,7 +123,7 @@ public class Migration implements Serializable {
             for (SearchHit hit : scrollResp.getHits()) {
                 hitsRead = true;
                 //Handle the hit…
-                bulkRequestBuilder.add(client.prepareIndex(targetIndex, hit.getType())
+                bulkRequestBuilder.add(client.prepareIndex(targetName, hit.getType())
                         .setSource(hit.getSourceAsString()).setId(hit.getId()));
             }
             //Break condition: No hits are returned
@@ -179,7 +135,7 @@ public class Migration implements Serializable {
         final BulkResponse bulkItemResponses = bulkRequestBuilder.execute().get();
         indicesAdminClient.prepareRefresh().execute().get();
         if (bulkItemResponses.hasFailures()) {
-            throw new IllegalStateException("Failed to bulk index target index '" + targetIndex + "' from source index '" + sourceIndex);
+            throw new IllegalStateException("Failed to bulk index target index '" + targetName + "' from source index '" + sourceName);
         }
 
     }
@@ -197,24 +153,27 @@ public class Migration implements Serializable {
         }
     }
 
-    private void switchIndex(String alias, String sourceIndex, String targetIndex) throws ExecutionException, InterruptedException {
+    private void switchIndex() throws ExecutionException, InterruptedException {
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
+		String alias = target.getAlias();
+		String targetName = target.getName();
+		String sourceName = source.getName();
 
-        if (!indicesAdminClient.prepareExists(targetIndex).execute().get().isExists()) {
-            throw new IllegalStateException("Trying to add alias '" + alias + "' to '" + targetIndex + "', but target index does not exist");
+        if (!indicesAdminClient.prepareExists(targetName).execute().get().isExists()) {
+            throw new IllegalStateException("Trying to add alias '" + alias + "' to '" + targetName + "', but target index does not exist");
         }
 
         final IndicesAliasesRequestBuilder indicesAliasRequestBuilder = indicesAdminClient.prepareAliases()
-                .addAlias(targetIndex, alias);
-        if (!Strings.isEmpty(sourceIndex)) {
-            if (!indicesAdminClient.prepareExists(sourceIndex).execute().get().isExists()) {
-                throw new IllegalStateException("Trying to remove alias '" + alias + "' from '" + sourceIndex + "', but source index does not exist");
+                .addAlias(targetName, alias);
+        if (!Strings.isEmpty(sourceName)) {
+            if (!indicesAdminClient.prepareExists(sourceName).execute().get().isExists()) {
+                throw new IllegalStateException("Trying to remove alias '" + alias + "' from '" + sourceName + "', but source index does not exist");
             }
-            indicesAliasRequestBuilder.removeAlias(sourceIndex, alias);
+            indicesAliasRequestBuilder.removeAlias(sourceName, alias);
         }
         final IndicesAliasesResponse indicesAliasesResponse = indicesAliasRequestBuilder.execute().get();
         if (!indicesAliasesResponse.isAcknowledged()) {
-            throw new IllegalStateException("Failed to atomically add alias '" + alias + "' to target index '" + targetIndex + "' and remove it from source index '" + sourceIndex + "'");
+            throw new IllegalStateException("Failed to atomically add alias '" + alias + "' to target index '" + targetName + "' and remove it from source index '" + sourceName + "'");
         }
     }
 

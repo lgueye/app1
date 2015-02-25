@@ -1,10 +1,10 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Sets;
-
 import java.io.Serializable;
 import java.util.Set;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.Sets;
 
 /**
  * @author louis.gueye@gmail.com

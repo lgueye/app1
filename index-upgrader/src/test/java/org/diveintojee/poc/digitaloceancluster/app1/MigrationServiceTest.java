@@ -38,7 +38,7 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 		String source = "index1_v1";
 		String alias = "index1";
 
-		migrationService.migrate(new Migration(alias, null, source));
+		migrationService.migrate(new Migration(client, null, source));
 
 		final TestDomain domain = new TestDomain();
 		Long id = 1L;
