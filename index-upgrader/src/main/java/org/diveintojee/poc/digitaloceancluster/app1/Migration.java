@@ -62,7 +62,8 @@ public class Migration implements Serializable {
         switchIndex();
 
         // Delete source index
-        deleteIndex(source.getName());
+        if (source != null)
+            deleteIndex(source.getName());
     }
 
     private void createTargetIndex() throws IOException, ExecutionException, InterruptedException {
@@ -157,7 +158,7 @@ public class Migration implements Serializable {
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
 		String alias = target.getAlias();
 		String targetName = target.getName();
-		String sourceName = source.getName();
+        String sourceName = source == null ? null : source.getName();
 
         if (!indicesAdminClient.prepareExists(targetName).execute().get().isExists()) {
             throw new IllegalStateException("Trying to add alias '" + alias + "' to '" + targetName + "', but target index does not exist");
@@ -165,7 +166,7 @@ public class Migration implements Serializable {
 
         final IndicesAliasesRequestBuilder indicesAliasRequestBuilder = indicesAdminClient.prepareAliases()
                 .addAlias(targetName, alias);
-        if (!Strings.isEmpty(sourceName)) {
+        if (source != null && !Strings.isEmpty(source.getName())) {
             if (!indicesAdminClient.prepareExists(sourceName).execute().get().isExists()) {
                 throw new IllegalStateException("Trying to remove alias '" + alias + "' from '" + sourceName + "', but source index does not exist");
             }

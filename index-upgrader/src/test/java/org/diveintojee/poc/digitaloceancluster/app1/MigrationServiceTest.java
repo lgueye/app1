@@ -16,12 +16,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 import org.junit.Test;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -33,12 +29,28 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 	@Test
 	public void crudShouldSucceed() throws IOException, ExecutionException, InterruptedException {
 		final Client client = ElasticsearchIntegrationTest.client();
-		MigrationService migrationService = new MigrationService(client);
 
-		String source = "index1_v1";
-		String alias = "index1";
+        final String alias = "index1";
+        final String version = "v1";
+        final String settings = "{\n" +
+                "    \"settings\" : {\n" +
+                "        \"number_of_shards\" : 1\n" +
+                "    }\n" +
+                "}";
+        final String type = "domains";
+        final String definition = "{\n" +
+                "    \"domains\" : {\n" +
+                "        \"dynamic\": \"strict\",\n" +
+                "        \"properties\" : {\n" +
+                "            \"id\" : {\"type\" : \"long\", \"store\" : true },\n" +
+                "            \"title\" : {\"type\" : \"string\", \"store\" : true },\n" +
+                "            \"description\" : {\"type\" : \"string\", \"store\" : true }\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+        Index target = buildIndex(alias, version, settings, type, definition);
 
-		migrationService.migrate(new Migration(client, null, source));
+		new Migration(client, null, target).migrate();
 
 		final TestDomain domain = new TestDomain();
 		Long id = 1L;
@@ -47,7 +59,6 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 		domain.setDescription(RandomStringUtils.randomAlphanumeric(200));
 
 		final String idAsString = String.valueOf(id);
-		String type = "domains";
 		// Create
 		indexDocument(alias, type, domain, idAsString);
 		// Read
@@ -64,18 +75,6 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 		assertNull(retrieveDocument(alias, type, idAsString, TestDomain.class));
 
     }
-
-	@Test
-	public void resolveMappingsShouldSucceed() throws MalformedURLException {
-        final Client client = ElasticsearchIntegrationTest.client();
-        MigrationService migrationService = new MigrationService(client);
-        String alias = "index1";
-        String target = "index1_v1";
-        final List<String> expected = Lists.newArrayList();
-		expected.add("domains.json");
-        final List<String> actual = migrationService.resolveMappings(alias, target);
-        assertEquals(expected, actual);
-	}
 
 	private void deleteDocument(String alias, String type, String id) throws ExecutionException, InterruptedException {
 		final Client client = ElasticsearchIntegrationTest.client();
@@ -101,18 +100,39 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
     public void partialMigrationShouldSucceed() throws IOException, ExecutionException, InterruptedException {
 		// Given
         final Client client = ElasticsearchIntegrationTest.client();
-        MigrationService migrationService = new MigrationService(client);
+        String alias;
+        String version;
+        String settings;
+        String type;
+        String definition;
 
-        String alias = "index1";
-        String source = "index1_v1";
+        alias = "index1";
+        version = "v1";
+        settings = "{\n" +
+                "    \"settings\" : {\n" +
+                "        \"number_of_shards\" : 1\n" +
+                "    }\n" +
+                "}";
+        type = "domains";
+        definition = "{\n" +
+                "    \"domains\" : {\n" +
+                "        \"dynamic\": \"strict\",\n" +
+                "        \"properties\" : {\n" +
+                "            \"id\" : {\"type\" : \"long\", \"store\" : true },\n" +
+                "            \"title\" : {\"type\" : \"string\", \"store\" : true },\n" +
+                "            \"description\" : {\"type\" : \"string\", \"store\" : true }\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+        Index indexV1 = buildIndex(alias, version, settings, type, definition);
 
-        migrationService.migrate(new Migration(alias, null, source));
+        new Migration(client, null, indexV1).migrate();
 
         final int documentsCount = 100;
-        List<TestDomain> sourceList = bulkIndexSourceIndex(source, "domains", documentsCount);
+        List<TestDomain> sourceList = bulkIndexSourceIndex(indexV1.getAlias(), type, documentsCount);
         client.admin().indices().prepareRefresh().execute().get();
 
-        final SearchResponse sourceSearchResponse = client.prepareSearch(source)
+        final SearchResponse sourceSearchResponse = client.prepareSearch(indexV1.getAlias())
                 .setQuery(QueryBuilders.matchAllQuery()).setSize(200).execute().get();
         assertEquals((long) documentsCount, sourceSearchResponse.getHits().getTotalHits());
         List<TestDomain> sourceIndexDocuments = Lists.newArrayList();
@@ -135,30 +155,83 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
         assertEquals(transformedSourceList, sourceIndexDocuments);
 
 		// When
-		String target = "index1_v2";
-        migrationService.migrate(new Migration(alias, source, target));
+        alias = "index1";
+        version = "v2";
+        settings = "{\n" +
+                "    \"settings\" : {\n" +
+                "        \"number_of_shards\" : 1\n" +
+                "    }\n" +
+                "}";
+        type = "domains";
+        definition = "{\n" +
+                "    \"domains\" : {\n" +
+                "        \"dynamic\": \"strict\",\n" +
+                "        \"properties\" : {\n" +
+                "            \"id\" : {\"type\" : \"long\", \"store\" : true },\n" +
+                "            \"title\" : {\"type\" : \"string\", \"store\" : true },\n" +
+                "            \"description\" : {\"type\" : \"string\", \"store\" : true },\n" +
+                "            \"imageUrl\" : {\"type\" : \"string\", \"store\" : true }\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+        Index indexV2 = buildIndex(alias, version, settings, type, definition);
+        new Migration(client, indexV1, indexV2).migrate();
         client.admin().indices().prepareRefresh().execute().get();
 
-		List<TestDomain> targetIndexDocuments = buildDocuments(sourceIndexDocuments.size(), target);
+		List<TestDomain> targetIndexDocuments = buildDocuments(sourceIndexDocuments.size(), indexV2.getAlias());
 		assertEquals(sourceIndexDocuments, targetIndexDocuments);
+    }
+
+    private Index buildIndex(String alias, String version, String settings, String type, String definition) {
+        Index target = new Index();
+        target.setAlias(alias);
+        target.setVersion(version);
+        target.setSettings(settings);
+        final Mapping mapping = new Mapping();
+        mapping.setParent(target);
+        mapping.setType(type);
+        mapping.setDefinition(definition);
+        target.addMapping(mapping);
+        return target;
     }
 
     @Test
     public void fullMigrationShouldSucceed() throws IOException, ExecutionException, InterruptedException {
 		// Given
         final Client client = ElasticsearchIntegrationTest.client();
-        MigrationService migrationService = new MigrationService(client);
+        String alias;
+        String version;
+        String settings;
+        String type;
+        String definition;
 
-        String alias = "index1";
-        String source = "index1_v1";
+        alias = "index1";
+        version = "v1";
+        settings = "{\n" +
+                "    \"settings\" : {\n" +
+                "        \"number_of_shards\" : 1\n" +
+                "    }\n" +
+                "}";
+        type = "domains";
+        definition = "{\n" +
+                "    \"domains\" : {\n" +
+                "        \"dynamic\": \"strict\",\n" +
+                "        \"properties\" : {\n" +
+                "            \"id\" : {\"type\" : \"long\", \"store\" : true },\n" +
+                "            \"title\" : {\"type\" : \"string\", \"store\" : true },\n" +
+                "            \"description\" : {\"type\" : \"string\", \"store\" : true }\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+        Index indexV1 = buildIndex(alias, version, settings, type, definition);
 
-        migrationService.migrate(new Migration(alias, null, source));
+        new Migration(client, null, indexV1).migrate();
 
         final int documentsCount = 100;
-        List<TestDomain> sourceList = bulkIndexSourceIndex(source, "domains", documentsCount);
+        List<TestDomain> sourceList = bulkIndexSourceIndex(alias, "domains", documentsCount);
         client.admin().indices().prepareRefresh().execute().get();
 
-        final SearchResponse sourceSearchResponse = client.prepareSearch(source)
+        final SearchResponse sourceSearchResponse = client.prepareSearch(alias)
                 .setQuery(QueryBuilders.matchAllQuery()).setSize(200).execute().get();
         assertEquals((long) documentsCount, sourceSearchResponse.getHits().getTotalHits());
         List<TestDomain> sourceDocuments = Lists.newArrayList();
@@ -181,6 +254,7 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
         assertEquals(transformedSourceList, sourceDocuments);
 
 		// When
+        MigrationService migrationService = new MigrationService(client);
         migrationService.migrate();
         client.admin().indices().prepareRefresh().execute().get();
 
@@ -225,11 +299,4 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
         return sourceList;
     }
 
-    @Test
-    public void testScan() throws URISyntaxException, IOException {
-        final Resource[] resources = new PathMatchingResourcePatternResolver(this.getClass().getClassLoader()).getResources("/migrations/*");
-        for (Resource resource : resources) {
-            System.out.println("resource = " + resource.getURL());
-        }
-    }
 }
