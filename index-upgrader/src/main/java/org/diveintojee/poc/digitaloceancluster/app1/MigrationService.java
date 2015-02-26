@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -84,7 +85,8 @@ public class MigrationService {
 
 
     private Set<Index> buildIndicesGraph() throws IOException {
-        final Resource[] resources = new PathMatchingResourcePatternResolver(MigrationService.class.getClassLoader()).getResources("/migrations/**/v*");
+        final ResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+        final Resource[] resources = resourceResolver.getResources("/migrations/**/v*");
         Set<Index> indices = Sets.newTreeSet();
         for (Resource resource : resources) {
             Index index = new Index();
@@ -95,7 +97,7 @@ public class MigrationService {
             index.setVersion(version);
             String settings = extractIndexSettings(input);
             index.setSettings(settings);
-            final Resource[] mappingResources = new PathMatchingResourcePatternResolver(MigrationService.class.getClassLoader()).getResources("classpath*:/migrations/" + alias + "/" + version + "/mappings/**.json");
+            final Resource[] mappingResources = resourceResolver.getResources("/migrations/" + alias + "/" + version + "/mappings/**.json");
             for (Resource mappingResource : mappingResources) {
                 final String mappingURL = String.valueOf(mappingResource.getURL());
                 final String type = extractMappingType(mappingURL);
