@@ -26,28 +26,13 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 
 	@Test
 	public void crudShouldSucceed() throws IOException, ExecutionException, InterruptedException {
+		// Given
 		final Client client = ElasticsearchIntegrationTest.client();
-
-        final String alias = "index1";
-        final String version = "v1";
-        final String settings = "{\n" +
-                "    \"settings\" : {\n" +
-                "        \"number_of_shards\" : 1\n" +
-                "    }\n" +
-                "}";
-        final String type = "domains";
-        final String definition = "{\n" +
-                "    \"domains\" : {\n" +
-                "        \"dynamic\": \"strict\",\n" +
-                "        \"properties\" : {\n" +
-                "            \"id\" : {\"type\" : \"long\", \"store\" : true },\n" +
-                "            \"title\" : {\"type\" : \"string\", \"store\" : true },\n" +
-                "            \"description\" : {\"type\" : \"string\", \"store\" : true }\n" +
-                "        }\n" +
-                "    }\n" +
-                "}";
-        Index target = buildIndex(alias, version, settings, type, definition);
-
+		MigrationService migrationService = new MigrationService(client);
+		final Resource[] indexV1Resources = new PathMatchingResourcePatternResolver().getResources("/migrations/index1/v1");
+		final Resource indexV1Resource = indexV1Resources[0];
+		Index target = migrationService.buildIndex(indexV1Resource.getURL());
+		// When I migrate indices from nothing to index1
 		new Migration(client, null, target).migrate();
 
 		final TestDomain domain = new TestDomain();
@@ -57,21 +42,25 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 		domain.setDescription(RandomStringUtils.randomAlphanumeric(200));
 
 		final String idAsString = String.valueOf(id);
-		// Create
-		IndexOperations.indexDocument(alias, type, domain, idAsString);
-		// Read
-		TestDomain saved = IndexOperations.retrieveDocument(alias, type, idAsString, TestDomain.class);
-		assertNotNull(saved);
-		// Update
-		String newDescription = RandomStringUtils.randomAlphanumeric(200);
-		saved.setDescription(newDescription);
-		IndexOperations.indexDocument(alias, type, saved, idAsString);
-		TestDomain updated = IndexOperations.retrieveDocument(alias, type, idAsString, TestDomain.class);
-		assertEquals(newDescription, updated.getDescription());
-		// Delete
-		IndexOperations.deleteDocument(alias, type, idAsString);
-		assertNull(IndexOperations.retrieveDocument(alias, type, idAsString, TestDomain.class));
-
+		final String alias = target.getAlias();
+		// And I index documents
+		for (Mapping mapping : target.getMappings()) {
+			// Create
+			final String type = mapping.getType();
+			IndexOperations.indexDocument(alias, type, domain, idAsString);
+			// Read
+			TestDomain saved = IndexOperations.retrieveDocument(alias, type, idAsString, TestDomain.class);
+			assertNotNull(saved);
+			// Update
+			String newDescription = RandomStringUtils.randomAlphanumeric(200);
+			saved.setDescription(newDescription);
+			IndexOperations.indexDocument(alias, type, saved, idAsString);
+			TestDomain updated = IndexOperations.retrieveDocument(alias, type, idAsString, TestDomain.class);
+			assertEquals(newDescription, updated.getDescription());
+			// Delete
+			IndexOperations.deleteDocument(alias, type, idAsString);
+			assertNull(IndexOperations.retrieveDocument(alias, type, idAsString, TestDomain.class));
+		}
     }
 
     @Test
@@ -112,24 +101,14 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 
 		final Resource indexV2Resource = new PathMatchingResourcePatternResolver().getResources("/migrations/index1/v2")[0];
 		Index indexV2 = migrationService.buildIndex(indexV2Resource.getURL());
+
+		// When
         new Migration(client, indexV1, indexV2).migrate();
         client.admin().indices().prepareRefresh().execute().get();
 
-		List<TestDomain> targetIndexDocuments = buildDocuments(sourceIndexDocuments.size(), indexV2.getAlias());
+		// Then
+		List<TestDomain> targetIndexDocuments = IndexOperations.buildDocuments(sourceIndexDocuments.size(), indexV2.getAlias());
 		assertEquals(sourceIndexDocuments, targetIndexDocuments);
-    }
-
-    private Index buildIndex(String alias, String version, String settings, String type, String definition) {
-        Index target = new Index();
-        target.setAlias(alias);
-        target.setVersion(version);
-        target.setSettings(settings);
-        final Mapping mapping = new Mapping();
-        mapping.setParent(target);
-        mapping.setType(type);
-        mapping.setDefinition(definition);
-        target.addMapping(mapping);
-        return target;
     }
 
     @Test
@@ -176,7 +155,7 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 		String target;
 		List<TestDomain> targetDocuments;
 		target = "index1_v3";
-		targetDocuments = buildDocuments(sourceDocuments.size(), target);
+		targetDocuments = IndexOperations.buildDocuments(sourceDocuments.size(), target);
 		assertEquals(sourceDocuments, targetDocuments);
     }
 
@@ -203,16 +182,4 @@ public class MigrationServiceTest extends ElasticsearchIntegrationTest {
 
 	}
 
-	private List<TestDomain> buildDocuments(int expectedResultsSize, String target) throws InterruptedException, ExecutionException, IOException {
-        final Client client = ElasticsearchIntegrationTest.client();
-		final SearchResponse searchResponse = client.prepareSearch(target)
-				.setQuery(QueryBuilders.matchAllQuery()).setSize(expectedResultsSize).execute().get();
-		assertEquals( (long) expectedResultsSize, searchResponse.getHits().getTotalHits());
-		List<TestDomain> targetDocuments = Lists.newArrayList();
-		for (SearchHit hit : searchResponse.getHits()) {
-			TestDomain document = objectMapper.readValue(hit.getSourceAsString(), TestDomain.class);
-			targetDocuments.add(document);
-		}
-		return targetDocuments;
-	}
 }

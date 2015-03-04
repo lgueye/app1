@@ -13,7 +13,10 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.test.ElasticsearchIntegrationTest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -65,6 +68,19 @@ public class IndexOperations {
 		client.admin().indices().prepareRefresh().execute().get();
 		assertFalse(bulkItemResponses.hasFailures());
 		return sourceList;
+	}
+
+	public static List<TestDomain> buildDocuments(int expectedResultsSize, String target) throws InterruptedException, ExecutionException, IOException {
+		final Client client = ElasticsearchIntegrationTest.client();
+		final SearchResponse searchResponse = client.prepareSearch(target)
+				.setQuery(QueryBuilders.matchAllQuery()).setSize(expectedResultsSize).execute().get();
+		assertEquals( (long) expectedResultsSize, searchResponse.getHits().getTotalHits());
+		List<TestDomain> targetDocuments = Lists.newArrayList();
+		for (SearchHit hit : searchResponse.getHits()) {
+			TestDomain document = objectMapper.readValue(hit.getSourceAsString(), TestDomain.class);
+			targetDocuments.add(document);
+		}
+		return targetDocuments;
 	}
 
 }
