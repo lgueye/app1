@@ -16,7 +16,9 @@
         <randomizedtesting-runner.version>2.1.10</randomizedtesting-runner.version>
         <lucene-test-framework.version>4.10.2</lucene-test-framework.version>
         <start-class>org.diveintojee.poc.digitaloceancluster.app1.IndexMigrationApplication</start-class>
-    </properties>
+		<powermock.version>1.6.1</powermock.version>
+		<javax.el.version>3.0.0</javax.el.version>
+	</properties>
     <dependencies>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -81,11 +83,37 @@
         <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>javax.el</artifactId>
-            <version>3.0.0</version>
+            <version>${javax.el.version}</version>
             <scope>test</scope>
         </dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito</artifactId>
+			<version>${powermock.version}</version>
+			<scope>test</scope>
+		</dependency>
 
-    </dependencies>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+			<version>${powermock.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.powermock</groupId>
+					<artifactId>powermock-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.powermock</groupId>
+					<artifactId>powermock-reflect</artifactId>
+				</exclusion>
+			</exclusions>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>

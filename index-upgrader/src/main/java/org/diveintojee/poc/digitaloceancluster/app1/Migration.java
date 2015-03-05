@@ -66,7 +66,7 @@ public class Migration implements Serializable {
             deleteIndex(source.getName());
     }
 
-    private void createTargetIndex() throws IOException, ExecutionException, InterruptedException {
+    void createTargetIndex() throws IOException, ExecutionException, InterruptedException {
 
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
 
@@ -89,24 +89,24 @@ public class Migration implements Serializable {
 
     }
 
-    private void bulkIndexTargetIndexFromSourceIndex() throws InterruptedException, ExecutionException, MalformedURLException {
+    void bulkIndexTargetIndexFromSourceIndex() throws InterruptedException, ExecutionException, MalformedURLException {
 
 		if (source == null || Strings.isEmpty(source.getName())) {
 			return;
 		}
 		final String sourceName = source.getName();
 		if (target == null || Strings.isEmpty(target.getName())) {
-			throw new IllegalArgumentException("Trying to reindex from '" + sourceName + "' but target index is not defined");
+			throw new IllegalStateException("Trying to reindex from '" + sourceName + "' but target index is not defined");
 		}
 		final String targetName = target.getName();
 		final IndicesAdminClient indicesAdminClient = client.admin().indices();
 
         if (!indicesAdminClient.prepareExists(sourceName).execute().get().isExists()) {
-            throw new IllegalArgumentException("Trying to reindex from '" + sourceName + "', but source index does not exist");
+            throw new IllegalStateException("Trying to reindex from '" + sourceName + "', but source index does not exist");
         }
 
         if (!indicesAdminClient.prepareExists(targetName).execute().get().isExists()) {
-            throw new IllegalArgumentException("Trying to reindex from '" + sourceName + "' to '" + targetName + "', but target index does not exist");
+            throw new IllegalStateException("Trying to reindex from '" + sourceName + "' to '" + targetName + "', but target index does not exist");
         }
 
         SearchRequestBuilder searchBuilder = client.prepareSearch(sourceName)
@@ -141,7 +141,7 @@ public class Migration implements Serializable {
 
     }
 
-    private void deleteIndex(String index) throws ExecutionException, InterruptedException {
+    void deleteIndex(String index) throws ExecutionException, InterruptedException {
         if (Strings.isEmpty(index)) return;
 
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
@@ -154,7 +154,7 @@ public class Migration implements Serializable {
         }
     }
 
-    private void switchIndex() throws ExecutionException, InterruptedException {
+    void switchIndex() throws ExecutionException, InterruptedException {
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
 		String alias = target.getAlias();
 		String targetName = target.getName();

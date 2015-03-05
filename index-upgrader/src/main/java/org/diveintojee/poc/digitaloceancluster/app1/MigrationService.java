@@ -144,7 +144,6 @@ public class MigrationService {
 		final String pattern = "/migrations/";
 		input = input.substring(input.indexOf(pattern) + pattern.length(), input.length());
 		final String version = input.substring(input.indexOf("/") + 1, input.length());
-		System.out.println("version = " + version);
 		return version;
     }
 
