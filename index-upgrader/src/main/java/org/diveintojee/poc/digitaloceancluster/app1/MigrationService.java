@@ -1,12 +1,10 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Resources;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +13,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.io.Resources;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author louis.gueye@gmail.com
@@ -59,7 +58,7 @@ public class MigrationService {
 		return migrations;
     }
 
-	private Map<String, List<Index>> groupIndicesByAlias(Set<Index> indicesGraph) {
+	Map<String, List<Index>> groupIndicesByAlias(Set<Index> indicesGraph) {
 		Map<String, List<Index>> aliases = Maps.newHashMap();
 		for (Index index : indicesGraph) {
 			final String key = index.getAlias();
@@ -71,7 +70,7 @@ public class MigrationService {
 		return aliases;
 	}
 
-	private int findCurrentIndex(final List<Index> indices) throws ExecutionException, InterruptedException {
+	int findCurrentIndex(final List<Index> indices) throws ExecutionException, InterruptedException {
         final IndicesAdminClient indicesAdminClient = client.admin().indices();
         int idx = -1;
         for (int i = 0; i < indices.size(); i++) {
@@ -96,11 +95,11 @@ public class MigrationService {
     }
 
 	Index buildIndex(URL resourceURL) throws IOException {
-		String input = String.valueOf(resourceURL);
-		if (input.endsWith("/")) input = input.substring(0, input.length() -1);
-		String alias = extractIndexAlias(input);
-		String version = extractIndexVersion(input);
-		String settings = extractIndexSettings(input);
+		String urlAsString = String.valueOf(resourceURL);
+        String normalizedURL = trimTrailingSlash(urlAsString);
+        String alias = extractIndexAlias(normalizedURL);
+		String version = extractIndexVersion(normalizedURL);
+		String settings = extractIndexSettings(normalizedURL);
 		Index index = new Index();
 		index.setAlias(alias);
 		index.setVersion(version);
@@ -120,39 +119,41 @@ public class MigrationService {
 		return index;
 	}
 
+    String trimTrailingSlash(final String input) {
+        if (input.endsWith("/")) return input.substring(0, input.length() -1);
+        return input;
+    }
 
-	private String extractMappingDefinition(String input) throws IOException {
+
+    String extractMappingDefinition(final String input) throws IOException {
 		if (input.endsWith("/")) throw new IllegalArgumentException("URL should not end with / char");
         return Resources.toString(new ClassPathResource(input.substring(input.indexOf("/migrations"))).getURL(), Charsets.UTF_8);
     }
 
-    private String extractMappingType(String mappingURL) {
+    String extractMappingType(final String mappingURL) {
 		if (mappingURL.endsWith("/")) throw new IllegalArgumentException("URL should not end with / char");
         return mappingURL.substring(mappingURL.lastIndexOf("/") + 1, mappingURL.lastIndexOf("."));
     }
 
-    private String extractIndexSettings(String input) throws IOException {
+    String extractIndexSettings(final String input) throws IOException {
 		if (input.endsWith("/")) throw new IllegalArgumentException("URL should not end with / char");
         final String pattern = "/migrations/";
-        String settings = input.substring(input.indexOf(pattern), input.length()) + "/settings.json";
-        settings = Resources.toString(new ClassPathResource(settings).getURL(), Charsets.UTF_8);
-        return settings;
+        final String settings = input.substring(input.indexOf(pattern), input.length()) + "/settings.json";
+        return Resources.toString(new ClassPathResource(settings).getURL(), Charsets.UTF_8);
     }
 
-    private String extractIndexVersion(String input) {
+    String extractIndexVersion(final String input) {
 		if (input.endsWith("/")) throw new IllegalArgumentException("URL should not end with / char");
 		final String pattern = "/migrations/";
-		input = input.substring(input.indexOf(pattern) + pattern.length(), input.length());
-		final String version = input.substring(input.indexOf("/") + 1, input.length());
-		return version;
+		final String patternSuffix = input.substring(input.indexOf(pattern) + pattern.length(), input.length());
+        return patternSuffix.substring(patternSuffix.indexOf("/") + 1, patternSuffix.length());
     }
 
-    private String extractIndexAlias(String input) {
+    String extractIndexAlias(final String input) {
 		if (input.endsWith("/")) throw new IllegalArgumentException("URL should not end with / char");
         final String pattern = "/migrations/";
-        String alias = input.substring(input.indexOf(pattern) + pattern.length(), input.length());
-        alias = alias.substring(0, alias.indexOf("/"));
-        return alias;
+        final String patternSuffix = input.substring(input.indexOf(pattern) + pattern.length(), input.length());
+        return patternSuffix.substring(0, patternSuffix.indexOf("/"));
     }
 
 }

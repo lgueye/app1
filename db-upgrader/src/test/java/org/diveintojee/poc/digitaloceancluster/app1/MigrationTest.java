@@ -2,7 +2,6 @@ package org.diveintojee.poc.digitaloceancluster.app1;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
-import org.flywaydb.core.Flyway;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

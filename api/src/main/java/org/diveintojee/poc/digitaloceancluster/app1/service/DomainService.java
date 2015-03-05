@@ -1,7 +1,6 @@
 package org.diveintojee.poc.digitaloceancluster.app1.service;
 
 import com.google.common.collect.Lists;
-import org.diveintojee.poc.digitaloceancluster.app1.api.DomainsResource;
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.diveintojee.poc.digitaloceancluster.app1.persistence.data.DatabaseRepository;
 import org.diveintojee.poc.digitaloceancluster.app1.persistence.index.IndexRepository;

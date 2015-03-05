@@ -1,14 +1,14 @@
 package org.diveintojee.poc.digitaloceancluster.app1;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchAutoConfiguration;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author louis.gueye@gmail.com
