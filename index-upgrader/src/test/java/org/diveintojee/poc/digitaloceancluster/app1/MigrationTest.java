@@ -8,10 +8,25 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsReques
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequestBuilder;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequestBuilder;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.AbstractListenableActionFuture;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -19,6 +34,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
+import java.sql.Time;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -193,6 +209,13 @@ public class MigrationTest {
 		new Migration(client, source, target).bulkIndexTargetIndexFromSourceIndex();
 	}
 
+    /**
+     * TODO: refactor this test, it's unmaintainable
+     *
+     * @throws InterruptedException
+     * @throws ExecutionException
+     * @throws IOException
+     */
 	@Test(expected = IllegalStateException.class)
 	public void bulkIndexTargetIndexFromSourceIndexShouldThrowIllegalStateExceptionIfBulkIndexHasFailures() throws InterruptedException, ExecutionException, IOException {
 		// Given
@@ -209,6 +232,60 @@ public class MigrationTest {
         when(adminClient.indices()).thenReturn(indicesAdminClient);
         mockIndexExistence(sourceIndexName, true, indicesAdminClient);
         mockIndexExistence(targetIndexName, true, indicesAdminClient);
+
+        SearchRequestBuilder searchRequestBuilder = mock(SearchRequestBuilder.class);
+        when(client.prepareSearch(sourceIndexName)).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.setSearchType(SearchType.SCAN)).thenReturn(searchRequestBuilder);
+        final TimeValue keepAlive = new TimeValue(6000);
+        when(searchRequestBuilder.setScroll(keepAlive)).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.setQuery(any(QueryBuilder.class))).thenReturn(searchRequestBuilder);
+        when(searchRequestBuilder.setSize(200)).thenReturn(searchRequestBuilder);
+        ListenableActionFuture<SearchResponse> searchResponseListenableActionFuture = mock(ListenableActionFuture.class);
+        when(searchRequestBuilder.execute()).thenReturn(searchResponseListenableActionFuture);
+        SearchResponse searchResponse = mock(SearchResponse.class);
+        when(searchResponseListenableActionFuture.get()).thenReturn(searchResponse);
+
+        BulkRequestBuilder bulkRequestBuilder = mock(BulkRequestBuilder.class);
+        when(client.prepareBulk()).thenReturn(bulkRequestBuilder);
+
+        String initialScrollId = "1";
+        when(searchResponse.getScrollId()).thenReturn(initialScrollId);
+        SearchScrollRequestBuilder searchScrollRequestBuilder = mock(SearchScrollRequestBuilder.class);
+        when(client.prepareSearchScroll(initialScrollId)).thenReturn(searchScrollRequestBuilder);
+        when(searchScrollRequestBuilder.setScroll(keepAlive)).thenReturn(searchScrollRequestBuilder);
+        ListenableActionFuture<SearchResponse> searchScrollResponseListenableActionFuture = mock(ListenableActionFuture.class);
+        when(searchScrollRequestBuilder.execute()).thenReturn(searchScrollResponseListenableActionFuture);
+        SearchResponse searchScrollResponse = mock(SearchResponse.class);
+        when(searchScrollResponseListenableActionFuture.get()).thenReturn(searchScrollResponse);
+        SearchHits searchHits = mock(SearchHits.class);
+        when(searchScrollResponse.getHits()).thenReturn(searchHits);
+        String hitType = "whatever-hit-type";
+        final SearchHit hit0 = mock(SearchHit.class);
+        SearchHit[] hits = new SearchHit[]{hit0};
+        when(searchHits.getHits()).thenReturn(hits);
+        when(hit0.getType()).thenReturn(hitType);
+
+        String hitSource = "{hit source}";
+        when(hit0.getSourceAsString()).thenReturn(hitSource);
+        String hitId = "150";
+        when(hit0.getId()).thenReturn(hitId);
+        IndexRequestBuilder indexRequestBuilder = mock(IndexRequestBuilder.class);
+        when(client.prepareIndex(targetIndexName, hitType)).thenReturn(indexRequestBuilder);
+        when(indexRequestBuilder.setSource(hitSource)).thenReturn(indexRequestBuilder);
+        when(indexRequestBuilder.setId(hitId)).thenReturn(indexRequestBuilder);
+        ListenableActionFuture<BulkResponse> bulkResponseListenableActionFuture = mock(ListenableActionFuture.class);
+        when(bulkRequestBuilder.execute()).thenReturn(bulkResponseListenableActionFuture);
+        BulkResponse bulkResponse = mock(BulkResponse.class);
+        when(bulkResponseListenableActionFuture.get()).thenReturn(bulkResponse);
+        when(bulkResponse.hasFailures()).thenReturn(true);
+
+//        RefreshRequestBuilder refreshRequestBuilder = mock(RefreshRequestBuilder.class);
+//        when(indicesAdminClient.prepareRefresh(targetIndexName)).thenReturn(refreshRequestBuilder);
+//        ListenableActionFuture<RefreshResponse> refreshResponseListenableActionFuture = mock(ListenableActionFuture.class);
+//        when(refreshRequestBuilder.execute()).thenReturn(refreshResponseListenableActionFuture);
+//        RefreshResponse refreshResponse = mock(RefreshResponse.class);
+//        when(refreshResponseListenableActionFuture.get()).thenReturn(refreshResponse);
+//
 
 		// When
 		new Migration(client, source, target).bulkIndexTargetIndexFromSourceIndex();
