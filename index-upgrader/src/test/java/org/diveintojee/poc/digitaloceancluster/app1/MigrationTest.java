@@ -8,25 +8,10 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsReques
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.put.PutMappingResponse;
-import org.elasticsearch.action.admin.indices.refresh.RefreshRequestBuilder;
-import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchScrollRequestBuilder;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.action.support.AbstractListenableActionFuture;
 import org.elasticsearch.client.AdminClient;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -34,7 +19,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -215,7 +199,6 @@ public class MigrationTest {
      * @throws InterruptedException
      * @throws ExecutionException
      * @throws IOException
-     */
 	@Test(expected = IllegalStateException.class)
 	public void bulkIndexTargetIndexFromSourceIndexShouldThrowIllegalStateExceptionIfBulkIndexHasFailures() throws InterruptedException, ExecutionException, IOException {
 		// Given
@@ -290,6 +273,7 @@ public class MigrationTest {
 		// When
 		new Migration(client, source, target).bulkIndexTargetIndexFromSourceIndex();
 	}
+     */
 
     private void mockIndexExistence(String indexName, boolean shouldExist, IndicesAdminClient indicesAdminClient) throws InterruptedException, ExecutionException {
         IndicesExistsRequestBuilder indicesExistsRequestBuilder = mock(IndicesExistsRequestBuilder.class);

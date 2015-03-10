@@ -16,7 +16,6 @@ import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,13 +121,26 @@ public class Migration implements Serializable {
         while (true) {
             scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(6000)).execute().get();
 
-            final SearchHits hits = scrollResp.getHits();
-            if(hits == null || hits.getTotalHits() <= 0) break;
-            for (SearchHit hit : hits) {
+//            final SearchHits hits = scrollResp.getHits();
+//            if(hits == null || hits.getTotalHits() <= 0) break;
+//            for (SearchHit hit : hits) {
+//                //Handle the hit…
+//                bulkRequestBuilder.add(client.prepareIndex(targetName, hit.getType())
+//                        .setSource(hit.getSourceAsString()).setId(hit.getId()));
+//            }
+            boolean hitsRead = false;
+            for (SearchHit hit : scrollResp.getHits()) {
+
+                hitsRead = true;
                 //Handle the hit…
                 bulkRequestBuilder.add(client.prepareIndex(targetName, hit.getType())
                         .setSource(hit.getSourceAsString()).setId(hit.getId()));
             }
+            //Break condition: No hits are returned
+            if (!hitsRead) {
+                break;
+            }
+
         }
 
         final BulkResponse bulkItemResponses = bulkRequestBuilder.execute().get();
