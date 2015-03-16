@@ -184,6 +184,12 @@
     </dependencies>
     <build>
         <!-- Turn on filtering by default for application properties -->
+        <plugins>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+            </plugin>
+        </plugins>
         <resources>
             <resource>
                 <directory>${basedir}/src/main/resources</directory>
@@ -238,20 +244,6 @@
                         <excludes>
                             <exclude>**/Abstract*.java</exclude>
                         </excludes>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-war-plugin</artifactId>
-                    <version>${maven-war-plugin.version}</version>
-                    <configuration>
-                        <failOnMissingWebXml>false</failOnMissingWebXml>
-                        <archive>
-                            <manifest>
-                                <mainClass>${start-class}</mainClass>
-                                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            </manifest>
-                        </archive>
                     </configuration>
                 </plugin>
                 <plugin>
