@@ -3,10 +3,7 @@ package org.diveintojee.poc.digitaloceancluster.app1.domain;
 import com.google.common.base.Objects;
 import org.springframework.data.elasticsearch.annotations.Document;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
@@ -15,6 +12,7 @@ import java.io.Serializable;
  */
 @Document(indexName = "domains")
 @Entity
+@Table(name = "domains")
 public class Domain implements Serializable {
 
     public static final int DESCRIPTION_MAX_SIZE = 200;
