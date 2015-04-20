@@ -6,12 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
+import javax.xml.ws.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -58,7 +60,7 @@ public class ClusterAppClient {
     public List<Domain> findAllDomains() {
         Map<String, ?> uriVariables = Maps.newHashMap();
         HttpEntity entity = new HttpEntity(null);
-        ResponseEntity<List<Domain>> response = new RestTemplate()
+        ResponseEntity<List<Domain>> response = restTemplate
                 .exchange(getResourceLocation(), HttpMethod.GET, entity, new ParameterizedTypeReference<List<Domain>>() {
                 }, uriVariables);
         return response.getBody();
