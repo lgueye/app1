@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
@@ -38,12 +39,14 @@ public class DomainResourceTestIT {
         List<URI> uriList = Lists.newArrayList();
         for (Domain domain : detachedList) {
             final URI uri = api.createDomain(domain);
+            LoggerFactory.getLogger(ClusterAppClient.class).info("Created URI {}", uri);
             assertNotNull(uri);
             uriList.add(uri);
         }
         api.refreshIndex();
         List<Domain> persistedList = Lists.newArrayList();
         for (URI uri : uriList) {
+            LoggerFactory.getLogger(ClusterAppClient.class).info("Loading URI {}", uri);
             final Domain persisted = api.loadDomain(uri);
             assertNotNull(persisted);
             persistedList.add(persisted);
@@ -67,11 +70,15 @@ public class DomainResourceTestIT {
             copyFromPersisted.add(copy);
         }
         for (int i = 0; i < countInstances; i++) {
-            api.updateDomain(uriList.get(i), copyFromPersisted.get(i));
+            final Domain domain = copyFromPersisted.get(i);
+            final URI uri = uriList.get(i);
+            LoggerFactory.getLogger(ClusterAppClient.class).info("Updating URI {} with {} ", uri, domain);
+            api.updateDomain(uri, domain);
         }
         api.refreshIndex();
         List<Domain> updatedList = Lists.newArrayList();
         for (URI uri : uriList) {
+            LoggerFactory.getLogger(ClusterAppClient.class).info("Deleting URI {}", uri);
             final Domain updated = api.loadDomain(uri);
             assertNotNull(updated);
             updatedList.add(updated);

@@ -6,14 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestOperations;
-import org.springframework.web.client.RestTemplate;
 
-import javax.xml.ws.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
@@ -38,7 +35,7 @@ public class ClusterAppClient {
     public URI createDomain(Domain domain) throws IOException {
         return restTemplate.postForLocation(getResourceLocation(), domain);
     }
-    
+
     public void refreshIndex() throws IOException {
         restTemplate.postForEntity(getResourceLocation() + "/index/refresh", HttpEntity.EMPTY, Void.class);
     }
