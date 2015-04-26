@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import org.diveintojee.poc.digitaloceancluster.app1.domain.Domain;
 import org.diveintojee.poc.digitaloceancluster.app1.persistence.data.DatabaseRepository;
 import org.diveintojee.poc.digitaloceancluster.app1.persistence.index.IndexRepository;
+import org.elasticsearch.client.AdminClient;
+import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author louis.gueye@gmail.com
@@ -27,6 +30,9 @@ public class DomainService {
 
     @Autowired
     private IndexRepository indexRepository;
+
+    @Autowired
+    private Client indexClient;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DomainService.class);
 
@@ -72,5 +78,9 @@ public class DomainService {
         LOGGER.debug("Deleted all domains from db");
         indexRepository.deleteAll();
         LOGGER.debug("Deleted all domains from index");
+    }
+
+    public void refreshIndex(String index) throws ExecutionException, InterruptedException {
+        indexClient.admin().indices().prepareRefresh(index).execute().get();
     }
 }

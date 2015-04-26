@@ -38,6 +38,10 @@ public class ClusterAppClient {
     public URI createDomain(Domain domain) throws IOException {
         return restTemplate.postForLocation(getResourceLocation(), domain);
     }
+    
+    public void refreshIndex() throws IOException {
+        restTemplate.postForEntity(getResourceLocation() + "/index/refresh", HttpEntity.EMPTY, Void.class);
+    }
 
     public Domain loadDomain(URI uri) {
         Domain persisted = restTemplate.getForObject(uri, Domain.class);

@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -24,6 +25,8 @@ public class DomainResourceTestIT {
 
     @Autowired
     private ClusterAppClient api;
+    @Autowired
+    private RestOperations restTemplate;
 
     @Test
     public void crudDomainShouldSucceed() throws IOException {
@@ -38,6 +41,7 @@ public class DomainResourceTestIT {
             assertNotNull(uri);
             uriList.add(uri);
         }
+        api.refreshIndex();
         List<Domain> persistedList = Lists.newArrayList();
         for (URI uri : uriList) {
             final Domain persisted = api.loadDomain(uri);
@@ -65,6 +69,7 @@ public class DomainResourceTestIT {
         for (int i = 0; i < countInstances; i++) {
             api.updateDomain(uriList.get(i), copyFromPersisted.get(i));
         }
+        api.refreshIndex();
         List<Domain> updatedList = Lists.newArrayList();
         for (URI uri : uriList) {
             final Domain updated = api.loadDomain(uri);
@@ -75,9 +80,10 @@ public class DomainResourceTestIT {
         for (URI uri : uriList) {
             api.deleteResource(uri);
         }
+        api.refreshIndex();
         for (URI uri : uriList) {
             try {
-                new RestTemplate().getForEntity(uri, Domain.class);
+                restTemplate.getForEntity(uri, Domain.class);
             } catch (HttpClientErrorException e) {
                 assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
             } catch (Exception e) {
@@ -86,40 +92,6 @@ public class DomainResourceTestIT {
         }
 
     }
-
-//    private void performCrudTest() throws IOException {
-//        Domain domain = Fixtures.validDomain();
-//        // Create
-//        URI uri = api.createDomain(domain);
-//        assertNotNull(uri);
-//
-//        // Read
-//        Domain persisted = api.loadDomain(uri);
-//        assertNotNull(persisted);
-//        Long id = persisted.getId();
-//        assertNotNull(id);
-//        persisted.setId(null);
-//        assertEquals(persisted, domain);
-//
-//        // Update
-//        persisted.setId(id);
-//        String expectedName = "test test test";
-//        persisted.setTitle(expectedName);
-//        api.updateDomain(uri, persisted);
-//        Domain updated = api.loadDomain(uri);
-//        assertEquals(persisted, updated);
-//
-//        // Delete
-//        api.deleteResource(uri);
-//        try {
-//            new RestTemplate().getForEntity(uri, Domain.class);
-//        } catch (HttpClientErrorException e) {
-//            assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
-//        } catch (Exception e) {
-//            fail("expected {" + HttpClientErrorException.class + "}, got {" + e + "}");
-//        }
-//    }
-
 
     @Test
     public void searchDomainsShouldMatchDescription() throws IOException {
@@ -134,6 +106,7 @@ public class DomainResourceTestIT {
         List<Domain> results = api.searchDomains("virgi");
 
         // Then
+        assertNotNull(results);
         assertEquals(2, results.size());
     }
 
@@ -150,6 +123,7 @@ public class DomainResourceTestIT {
         List<Domain> results = api.searchDomains("condu");
 
         // Then
+        assertNotNull(results);
         assertEquals(2, results.size());
     }
 
@@ -166,6 +140,7 @@ public class DomainResourceTestIT {
         List<Domain> results = api.findAllDomains();
 
         // Then
+        assertNotNull(results);
         assertEquals(3, results.size());
     }
 

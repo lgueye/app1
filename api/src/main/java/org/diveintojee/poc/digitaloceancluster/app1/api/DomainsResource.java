@@ -14,6 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author louis.gueye@gmail.com
@@ -96,4 +97,12 @@ public class DomainsResource {
         LOGGER.debug("Deleted all domains");
     }
 
+    @RequestMapping(value = "/index/refresh", method = RequestMethod.POST)
+    public ResponseEntity<Void> refreshIndex() throws ExecutionException, InterruptedException {
+        this.service.refreshIndex("domains");
+        LOGGER.debug("Refreshing index");
+
+        // Add header to response
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }
