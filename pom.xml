@@ -21,8 +21,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <guava.version>17.0</guava.version>
         <commons-lang3.version>3.3.2</commons-lang3.version>
-        <spring-boot.version>1.2.1.RELEASE</spring-boot.version>
-        <spring.version>4.1.6.RELEASE</spring.version>
+        <spring-boot.version>1.1.9.RELEASE</spring-boot.version>
+        <spring.version>4.1.0.RELEASE</spring.version>
         <maven-release-plugin.version>2.2.1</maven-release-plugin.version>
         <elasticsearch.version>1.4.0</elasticsearch.version>
 		<flyway.version>3.1</flyway.version>

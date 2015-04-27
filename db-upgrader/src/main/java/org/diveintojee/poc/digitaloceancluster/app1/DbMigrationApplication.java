@@ -3,16 +3,20 @@ package org.diveintojee.poc.digitaloceancluster.app1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchAutoConfiguration;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author louis.gueye@gmail.com
  */
-@SpringBootApplication(exclude={
-        ElasticsearchDataAutoConfiguration.class,
+@Configuration
+@EnableAutoConfiguration(exclude={
+        ElasticsearchAutoConfiguration.class,
         JpaRepositoriesAutoConfiguration.class})
+@ComponentScan
 public class DbMigrationApplication implements CommandLineRunner {
 
     @Autowired

@@ -12,7 +12,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @ComponentScan(basePackages = "org.diveintojee.poc.digitaloceancluster")
 @EnableJpaRepositories(basePackages = "org.diveintojee.poc.digitaloceancluster.app1.persistence.data")
 @EnableElasticsearchRepositories(basePackages = "org.diveintojee.poc.digitaloceancluster.app1.persistence.index")
-
 public class App1Application extends SpringBootServletInitializer {
 
 	public static void main(String[] args) {
