@@ -39,14 +39,14 @@ public class DomainResourceTestIT {
         List<URI> uriList = Lists.newArrayList();
         for (Domain domain : detachedList) {
             final URI uri = api.createDomain(domain);
-            LoggerFactory.getLogger(ClusterAppClient.class).info("Created URI {}", uri);
+            LoggerFactory.getLogger(ClusterAppClient.class).debug("Created URI {}", uri);
             assertNotNull(uri);
             uriList.add(uri);
         }
         api.refreshIndex();
         List<Domain> persistedList = Lists.newArrayList();
         for (URI uri : uriList) {
-            LoggerFactory.getLogger(ClusterAppClient.class).info("Loading URI {}", uri);
+            LoggerFactory.getLogger(ClusterAppClient.class).debug("Loading URI {}", uri);
             final Domain persisted = api.loadDomain(uri);
             assertNotNull(persisted);
             persistedList.add(persisted);
@@ -72,13 +72,13 @@ public class DomainResourceTestIT {
         for (int i = 0; i < countInstances; i++) {
             final Domain domain = copyFromPersisted.get(i);
             final URI uri = uriList.get(i);
-            LoggerFactory.getLogger(ClusterAppClient.class).info("Updating URI {} with {} ", uri, domain);
+            LoggerFactory.getLogger(ClusterAppClient.class).debug("Updating URI {} with {} ", uri, domain);
             api.updateDomain(uri, domain);
         }
         api.refreshIndex();
         List<Domain> updatedList = Lists.newArrayList();
         for (URI uri : uriList) {
-            LoggerFactory.getLogger(ClusterAppClient.class).info("Deleting URI {}", uri);
+            LoggerFactory.getLogger(ClusterAppClient.class).debug("Deleting URI {}", uri);
             final Domain updated = api.loadDomain(uri);
             assertNotNull(updated);
             updatedList.add(updated);
