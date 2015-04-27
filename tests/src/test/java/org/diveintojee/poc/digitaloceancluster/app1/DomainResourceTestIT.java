@@ -32,7 +32,7 @@ public class DomainResourceTestIT {
     @Test
     public void crudDomainShouldSucceed() throws IOException {
         List<Domain> detachedList = Lists.newArrayList();
-        final int countInstances = 100;
+        final int countInstances = 20;
         for (int i = 0; i < countInstances; i++ ) {
             detachedList.add(Fixtures.validDomain());
         }
