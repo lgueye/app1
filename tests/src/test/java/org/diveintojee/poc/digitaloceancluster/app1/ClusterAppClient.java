@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestOperations;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @Component
@@ -41,9 +43,10 @@ public class ClusterAppClient {
     }
 
     public Domain loadDomain(URI uri) {
-        Domain persisted = restTemplate.getForObject(uri, Domain.class);
-        assertNotNull(persisted);
-        return persisted;
+        ResponseEntity<Domain> responseEntity = restTemplate.getForEntity(uri, Domain.class);
+        assertNotNull(responseEntity);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        return responseEntity.getBody();
     }
 
     public void updateDomain(URI uri, Domain persisted) {
@@ -64,6 +67,8 @@ public class ClusterAppClient {
         ResponseEntity<List<Domain>> response = restTemplate
                 .exchange(getResourceLocation(), HttpMethod.GET, entity, new ParameterizedTypeReference<List<Domain>>() {
                 }, uriVariables);
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         return response.getBody();
     }
 
@@ -72,6 +77,8 @@ public class ClusterAppClient {
         params.put("q", keyword);
         ResponseEntity<List<Domain>> response = restTemplate.exchange(getResourceLocation() + "/search?q={q}", HttpMethod.GET, null, new ParameterizedTypeReference<List<Domain>>() {
         }, params);
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         return response.getBody();
     }
 

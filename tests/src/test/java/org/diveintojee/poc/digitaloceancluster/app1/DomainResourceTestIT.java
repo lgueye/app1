@@ -110,6 +110,7 @@ public class DomainResourceTestIT {
         api.createDomain(Fixtures.createDomain("Uni cuius libidines praeter ac exitum Pisonis nec", "Et Valerius cum absentia mariti virginis Scipionis causa adultae ex erubesceret alitur ille diuturnum et ex cum virginis mariti mariti."));
 
         // When
+        api.refreshIndex();
         List<Domain> results = api.searchDomains("virgi");
 
         // Then
@@ -127,6 +128,7 @@ public class DomainResourceTestIT {
         api.createDomain(Fixtures.createDomain("Uni cuius libidines praeter ac exitum Pisonis nec", "Et Valerius cum absentia mariti virginis Scipionis causa adultae ex erubesceret alitur ille diuturnum et ex cum virginis mariti mariti."));
 
         // When
+        api.refreshIndex();
         List<Domain> results = api.searchDomains("condu");
 
         // Then
@@ -144,6 +146,7 @@ public class DomainResourceTestIT {
         api.createDomain(Fixtures.createDomain("Uni cuius libidines praeter ac exitum Pisonis nec", "Et Valerius cum absentia mariti virginis Scipionis causa adultae ex erubesceret alitur ille diuturnum et ex cum virginis mariti mariti."));
 
         // When
+        api.refreshIndex();
         List<Domain> results = api.findAllDomains();
 
         // Then
